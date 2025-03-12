@@ -2,7 +2,7 @@ import doREST
 import re
 import userio
 
-class getHeadroom:
+class getOverallIOPS:
 
     def __init__(self,url,access_token,serialnumbers,start,end,**kwargs):
         self.result=None
@@ -23,7 +23,7 @@ class getHeadroom:
             self.apicaller=''
         localapi='->'.join([self.apicaller,self.apibase])
         
-        self.api='/v1/performance-data/graphs?graphName=node_headroom_cpu_utilization&startDate='+self.start+'&endDate='+self.end+'&serialNumber='
+        self.api='/v1/performance-data/graphs?graphName=node_avg_iops&startDate='+self.start+'&endDate='+self.end+'&serialNumber='
 
         if 'debug' in kwargs.keys():
             self.debug=kwargs['debug']
@@ -45,11 +45,11 @@ class getHeadroom:
         if 'apicaller' in kwargs.keys():
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrHeadroom={}
+        self.aggrOverall={}
         for serialnumber in self.serialnumbers:
             api=self.api + serialnumber
             if self.debug & 1:
-                userio.message("Retrieve Headroom information for S/N " + serialnumber + "...")
+                userio.message("Retrieve Overall IOPS information for S/N " + serialnumber + "...")
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
@@ -58,14 +58,15 @@ class getHeadroom:
                 self.response=rest.response
                 if self.debug & 4:
                     self.showDebug()
-                avgCPUheadroom=0
-                for CPUTime in self.response['results']['counterData'].keys():
-                    avgCPUheadroom += self.response['results']['counterData'][CPUTime]['current_utilization']
-                avgCPUheadroom /= len(self.response['results']['counterData'])
-                avgCPUheadroom = round(avgCPUheadroom, 2)
-                if self.debug >= 3:
-                    userio.message(f"Average CPU headroom: {avgCPUheadroom}%")
-                self.aggrHeadroom[self.response['results']['serialNumber']]={'avgCPUheadroom':str(avgCPUheadroom)+"%"}
+                avgOverallIOPS=0
+                maxOverallIOPS=0
+                for Time in self.response['results']['counterData'].keys():
+                    avgOverallIOPS += self.response['results']['counterData'][Time]['iops']
+                    if self.response['results']['counterData'][Time]['iops'] > maxOverallIOPS:
+                        maxOverallIOPS = self.response['results']['counterData'][Time]['iops']  
+                avgOverallIOPS /= len(self.response['results']['counterData'])
+                avgOverallIOPS = round(avgOverallIOPS, 2)
+                self.aggrOverall[self.response['results']['serialNumber']]={'avg_OverallIOPS':avgOverallIOPS,'max_OverallIOPS':maxOverallIOPS}
             else:
                 self.result=1
                 self.reason=rest.reason

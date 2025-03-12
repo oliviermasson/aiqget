@@ -2,7 +2,7 @@ import doREST
 import re
 import userio
 
-class getHeadroom:
+class getBandwidth:
 
     def __init__(self,url,access_token,serialnumbers,start,end,**kwargs):
         self.result=None
@@ -23,7 +23,7 @@ class getHeadroom:
             self.apicaller=''
         localapi='->'.join([self.apicaller,self.apibase])
         
-        self.api='/v1/performance-data/graphs?graphName=node_headroom_cpu_utilization&startDate='+self.start+'&endDate='+self.end+'&serialNumber='
+        self.api='/v1/performance-data/graphs?graphName=node_network_throughput&startDate='+self.start+'&endDate='+self.end+'&serialNumber='
 
         if 'debug' in kwargs.keys():
             self.debug=kwargs['debug']
@@ -45,11 +45,11 @@ class getHeadroom:
         if 'apicaller' in kwargs.keys():
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrHeadroom={}
+        self.aggrBandwidth={}
         for serialnumber in self.serialnumbers:
             api=self.api + serialnumber
             if self.debug & 1:
-                userio.message("Retrieve Headroom information for S/N " + serialnumber + "...")
+                userio.message("Retrieve Bandwidth information for S/N " + serialnumber + "...")
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
@@ -58,14 +58,28 @@ class getHeadroom:
                 self.response=rest.response
                 if self.debug & 4:
                     self.showDebug()
-                avgCPUheadroom=0
-                for CPUTime in self.response['results']['counterData'].keys():
-                    avgCPUheadroom += self.response['results']['counterData'][CPUTime]['current_utilization']
-                avgCPUheadroom /= len(self.response['results']['counterData'])
-                avgCPUheadroom = round(avgCPUheadroom, 2)
-                if self.debug >= 3:
-                    userio.message(f"Average CPU headroom: {avgCPUheadroom}%")
-                self.aggrHeadroom[self.response['results']['serialNumber']]={'avgCPUheadroom':str(avgCPUheadroom)+"%"}
+                firstKey=next(iter(self.response['results']['counterData']))
+                protocols=self.response['results']['counterData'][firstKey].keys()
+                avgProtoIOPS={}
+                maxProtoIOPS={}
+                for proto in protocols:
+                    avgProtoIOPS[proto]=0
+                    maxProtoIOPS[proto]=0
+                for ProtoTime in self.response['results']['counterData'].keys():
+                    for proto in protocols:
+                        avgProtoIOPS[proto] += self.response['results']['counterData'][ProtoTime][proto]
+                        if self.response['results']['counterData'][ProtoTime][proto] > maxProtoIOPS[proto]:
+                            maxProtoIOPS[proto]=self.response['results']['counterData'][ProtoTime][proto]
+                avgResults={}
+                for proto in protocols:
+                    avgProtoIOPS[proto] /= len(self.response['results']['counterData'])
+                    avgProtoIOPS[proto] = round(avgProtoIOPS[proto], 2)
+                    avg=f'avg_{proto} (MB/s)'
+                    max=f'max_{proto} (MB/s)'
+                    avgResults[max]=maxProtoIOPS[proto]
+                    avgResults[avg]=avgProtoIOPS[proto]
+                self.aggrBandwidth[self.response['results']['serialNumber']]=avgResults
+                    
             else:
                 self.result=1
                 self.reason=rest.reason
