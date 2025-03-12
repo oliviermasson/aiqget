@@ -63,7 +63,7 @@ class getHeadroom:
                     avgCPUheadroom += self.response['results']['counterData'][CPUkey]['current_utilization']
                 avgCPUheadroom /= len(self.response['results']['counterData'])
                 avgCPUheadroom = round(avgCPUheadroom, 2)
-                if self.debug & 1:
+                if self.debug >= 3:
                     userio.message(f"Average CPU headroom: {avgCPUheadroom}%")
                 self.aggrHeadroom[self.response['results']['serialNumber']]={'avgCPUheadroom':str(avgCPUheadroom)+"%"}
             else:
