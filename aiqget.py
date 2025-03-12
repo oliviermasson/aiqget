@@ -24,14 +24,17 @@ aiqget='1.0'
 validoptions={'serialnumbers':'str',
               'debug':'bool',
               'restdebug':'bool',
-              'days':'int'}
+              'days':'int',
+              'customer':'str'}
 
-requiredoptions=['serialnumbers']
+requiredoptions=['serialnumbers','customer']
 
 usage="Version " + aiqget + "\n" + \
       "aiqget --serialnumbers\n" + \
       "         (List of serial numbers provided as comma separeted list)\n" + \
       "         \n" + \
+      "       --customer\n" + \
+      "         (Customer identifier that will be added as a prefix to the generated HTML file)\n\n" + \
       "       [--days]\n" + \
       "         (optional. Number of days to compute CPU headroom average)\n" + \
       "         (Default to 31 days before current date\n\n" + \
@@ -43,6 +46,8 @@ usage="Version " + aiqget + "\n" + \
 myopts=userio.validateoptions(sys.argv,validoptions,usage=usage,required=requiredoptions)
 
 serialnumbers=myopts.serialnumbers.split(',')
+
+customer=myopts.customer
 
 days=myopts.days
 if days is not None:
@@ -145,10 +150,10 @@ html_content += """
 """
 
 # Write the HTML file
-output_file = "aiqget_results.html"
+output_file = customer+"_aiqget_results.html"
 
 if os.path.exists(output_file):
-    today_date = datetime.now().strftime('%d_%m_%Y')
+    today_date = datetime.now().strftime('%d_%m_%Y_%H%M')
     new_name = f"aiqget_results_{today_date}.html"
     os.rename(output_file, new_name)
     userio.message(f"Existing file renamed to {new_name}")

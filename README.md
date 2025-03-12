@@ -13,6 +13,10 @@ It use Python 3.10.
 
 You just need to provide a comma-separated list of the serialnumber you want:
 
-example: python3 aiget.py --serialnumber 211941000138,211941000137
+example: python3 aiget.py --serialnumber 211941000138,211941000137 --customer ACME
 
-It will then generate an HTML file with associated results
+It will then generate an HTML file with associated results named : 
+
+ACME_aiqget_results.html
+
+Script will also rename existing HTML file
