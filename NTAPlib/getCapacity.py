@@ -26,9 +26,6 @@ class getCapacity:
         if 'debug' in kwargs.keys():
             self.debug=kwargs['debug']
 
-        if self.debug >= 3:
-            userio.message('',service=localapi + ":INIT")
-
         return
     
     def showDebug(self):
@@ -62,7 +59,7 @@ class getCapacity:
                 self.aggrCapacity[self.response['results']['systems'][serialIndex]['serialNumber']]={'release':self.response['results']['systems'][serialIndex]['osVersion'],
                                                                                                     'hostName':self.response['results']['systems'][serialIndex]['hostName'],
                                                                                                     'clusterName':self.response['results']['systems'][serialIndex]['clusterName'],
-                                                                                                    'CapacityUsed%':str(self.response['results']['systems'][serialIndex]['currentSystemCapacityUtilization'])+"%",
+                                                                                                    'CapacityUsed%':self.response['results']['systems'][serialIndex]['currentSystemCapacityUtilization'],
                                                                                                     'availTB':self.response['results']['systems'][serialIndex]['systemUnusedCapacity']}
             return(True)
         else:

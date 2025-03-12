@@ -218,13 +218,20 @@ html_content = """
                     x = rows[i].getElementsByTagName("td")[n];
                     y = rows[i + 1].getElementsByTagName("td")[n];
                     
-                    // Convert to number if possible
-                    let xContent = x.innerHTML;
-                    let yContent = y.innerHTML;
-                    if (!isNaN(xContent) && !isNaN(yContent)) {
+                    // Convert to number if possible and handle decimal numbers
+                    let xContent = x.innerHTML.trim();
+                    let yContent = y.innerHTML.trim();
+                    
+                    // Try to convert to numbers if they look like numbers
+                    if (xContent.match(/^-?\d*\.?\d+$/) && yContent.match(/^-?\d*\.?\d+$/)) {
                         xContent = parseFloat(xContent);
                         yContent = parseFloat(yContent);
+                    } else {
+                        // Case insensitive string comparison
+                        xContent = xContent.toLowerCase();
+                        yContent = yContent.toLowerCase();
                     }
+                    
                     
                     if (dir == "asc") {
                         if (xContent > yContent) {
@@ -289,14 +296,20 @@ html_content += """
 """
 
 # Write the HTML file
-output_file = customer+"_aiqget_results.html"
+if bandwidth or overallIOPS or protoIOPS:
+    output_file = customer+"_Perf_aiqget_results.html"
+else:
+    output_file = customer+"_aiqget_results.html"
 
 try:
     if os.path.exists(output_file):
         # Get file creation time (using modification time as fallback)
         file_time = os.path.getctime(output_file)
         file_date = datetime.fromtimestamp(file_time).strftime('%Y%m%d_%H%M')
-        new_name = f"{customer}_aiqget_results_{file_date}.html"
+        if bandwidth or overallIOPS or protoIOPS:
+            new_name = f"{customer}_Perf_aiqget_results_{file_date}.html"
+        else:
+            new_name = f"{customer}_aiqget_results_{file_date}.html"
         try:
             os.rename(output_file, new_name)
             userio.message(f"Existing file backed up to {new_name}")
