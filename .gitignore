@@ -1,2 +1,4 @@
 .vscode/launch.json
 *.html
+cnpget.sh
+NTAPlib/__pycache__/*
