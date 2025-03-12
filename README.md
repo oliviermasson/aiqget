@@ -13,10 +13,20 @@ It use Python 3.10.
 
 You just need to provide a comma-separated list of the serialnumber you want:
 
-example: python3 aiget.py --serialnumber 211941000138,211941000137 --customer ACME
+example: 
+`python3 aiget.py --serialnumber 211941000138,211941000137 --customer ACME --refresh_Token <your refresh token>`
 
 It will then generate an HTML file with associated results named : 
 
-ACME_aiqget_results.html
+`ACME_aiqget_results.html`
 
 Script will also rename existing HTML file
+
+`refresh_Token` is a required parameter
+
+You must register ActiveIQ API services to get a refresh_Token before running this script.  
+Go to [activeiq.netapp.com/api](https://activeiq.netapp.com/api)  
+Click on generate token and respond the questions  
+![alt text](image.png)  
+To obtain your access_Token and refresh_Token
+

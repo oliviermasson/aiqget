@@ -25,6 +25,7 @@ from datetime import datetime,timedelta
 aiqget='1.0'
 
 validoptions={'serialnumbers':'str',
+              'refresh_Token':'str',
               'debug':'bool',
               'restdebug':'bool',
               'days':'int',
@@ -33,23 +34,25 @@ validoptions={'serialnumbers':'str',
               'bandwidth': 'bool',
               'overallIOPS': 'bool'}
 
-requiredoptions=['serialnumbers','customer']
+requiredoptions=['serialnumbers','customer','refreshToken']
 
 usage="Version " + aiqget + "\n" + \
       "aiqget --serialnumbers\n" + \
-      "         (List of serial numbers provided as comma separeted list)\n" + \
+      "         (Required. List of serial numbers provided as comma separeted list)\n" + \
       "         \n" + \
       "       --customer\n" + \
-      "         (Customer identifier that will be added as a prefix to the generated HTML file)\n\n" + \
+      "         (Required. Customer identifier that will be added as a prefix to the generated HTML file)\n\n" + \
+      "       --refresh_Token\n" + \
+      "         (Required. The refresh token for AIQ access)\n\n" + \
       "       [--days]\n" + \
-      "         (optional. Number of days to compute CPU headroom average)\n" + \
-      "         (Default to 31 days before current date\n\n" + \
+      "         (optional. Number of days to compute all performances metrics average)\n" + \
+      "         (Default to 31 days before current date)\n\n" + \
       "       [--protoIOPS]\n" + \
-      "         (optional. retreive Protocols IOPS)\n\n" + \
+      "         (optional. retrieve Protocols IOPS)\n\n" + \
       "       [--overallIOPS]\n" + \
-      "         (optional. retreive total IOPS)\n\n" + \
+      "         (optional. retrieve total IOPS)\n\n" + \
       "       [--bandwidth]\n" + \
-      "         (optional. retreive bandwidth)\n\n" + \
+      "         (optional. retrieve bandwidth)\n\n" + \
       "       [--debug]\n" + \
       "         (optional. Show debug output)\n\n" + \
       "       [--restdebug]\n" + \
@@ -62,6 +65,9 @@ serialnumbers=myopts.serialnumbers.split(',')
 customer=myopts.customer
 
 days=myopts.days
+
+refresh_Token=myopts.refresh_Token
+
 if days is not None:
     days=int(days)
 else:
@@ -91,7 +97,7 @@ except:
 
 
 userio.message("Refresh AIQ access token...")
-tokens=refreshToken("api.activeiq.netapp.com",refresh_Token="eyJraWQiOiJkRUxjVkNzSmZ4MkFrZm1zYzdFNV9tVkhqQ2l1VUM2SDZ0cFhhY2NTMFhNIiwidmVyIjoiMS4wIiwiemlwIjoiRGVmbGF0ZSIsInNlciI6IjEuMCJ9.QjGw8IeLroyGt_ISkEGqIBXn4yJm54mlc6RUqL9oq3uxGXGMNK91tyX0ndwlaWeXCqqk1SXd5KsBX2_hzQHzo__vKYhXYU47VWRM7i9OjRbvsRnVFCT1m5TpItfzB2kgn2Z0Rs3N_CiVeTcujo3H_L_knlECl6q7LHJ7mVp6bTc-5YHLngxSvTc02lbLFFjSKlCb9qej3RLgLbyx5xDysbLxQ8oRFFqPl5zKTtyAnwyLWECSwG79pLVTT_FbvbhTShtDlBmaSlqz7AtaKljRgo_7lCWmBNQOBTW6hGm4p8MU1x_MxcxsJdzdhTig-krcpvyU-ZX4m2biSoeO-FUeuA.2Zj-ruRCCCxbUAGl.D8-gUL9u8VgTtG9UQ9I-qb2_BbjvhALNA6B0gTYdilLru_fvPA3sJb3CnBoMi-NobeFxMREshSkHSeuxusuMh6JPwWXbls1B22-963CXTDHAziypGWv6qix3TqMw_SKmYWvffH2y19wH-zv1r60OvNxT-Jfpmx7QaNKJFU1-ESLJoNiWIVJetTfPG5PLiS_nd7blBhNBvzOcuEOIopQb4iMPZGqyz_gRPVbvMTvWcDT85c_--cZlrSfk0QWNyFPl1Dnnij_mD9LqbH-hWZ9BVY3EX1gkbAV2MpktEBl3awf2KtlPlsU34vdiPTEGdV42VmRqM0bMg0EoF57U_LxWTER8i85v8odAIzuTQF5sjzReNcTaRbuoI4eXtth9xnC-dy9vPWy19XQlbaKyvyRsNH45fM3DK-S15eiecj9eJ8dESzbY-YVTUIL6V7pxkOgImnt1wyixefh_mf4T49jvSRvvVDdDNZ30spnD9Iqau2nrSY4-V8pqe8RN81ljPbLta3QGXG3xGIrqItkHx20LKWfTe3H-7YAab_qONn3KNBpkX_HYC9m-wjHkrPU1pCsIUkp9K2SpfEMM5m80XdK1B5KYXvgejZg6hMIw57dKDYLfvNyO8WyiYuZasTkVdkee_r8mgcKuH9TcWeb074qgjBBMQd9c0LGRuFMOLn3JGLHu5L57vPb1TBJ3my_IcUQ4ixlM22pfI2ASgIy7ttvYdUNrURYkDYZN6zGdeTk2WKGehBUCSNKsnOH5k-g.KsywiNSbnEU8P2IKBQNgng",debug=debug)
+tokens=refreshToken("api.activeiq.netapp.com",refresh_Token=refresh_Token,debug=debug)
 if not tokens.go():
     tokens.showDebug()
 
@@ -166,11 +172,88 @@ html_content = """
         th {
             background-color: #0066cc;
             color: white;
+            cursor: pointer;
+            position: relative;
+        }
+        th::after {
+            content: '⇕';
+            position: absolute;
+            right: 8px;
+            color: rgba(255,255,255,0.5);
+        }
+        th.asc::after {
+            content: '↓';
+            color: white;
+        }
+        th.desc::after {
+            content: '↑';
+            color: white;
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
     </style>
+    <script>
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.querySelector("table");
+            switching = true;
+            dir = "asc";
+            
+            // Remove sorting indicators from all headers
+            var headers = table.getElementsByTagName("th");
+            for (i = 0; i < headers.length; i++) {
+                headers[i].classList.remove("asc", "desc");
+            }
+            
+            // Add sorting indicator to clicked header
+            headers[n].classList.add(dir);
+            
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("td")[n];
+                    y = rows[i + 1].getElementsByTagName("td")[n];
+                    
+                    // Convert to number if possible
+                    let xContent = x.innerHTML;
+                    let yContent = y.innerHTML;
+                    if (!isNaN(xContent) && !isNaN(yContent)) {
+                        xContent = parseFloat(xContent);
+                        yContent = parseFloat(yContent);
+                    }
+                    
+                    if (dir == "asc") {
+                        if (xContent > yContent) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (xContent < yContent) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        headers[n].classList.remove("asc");
+                        headers[n].classList.add("desc");
+                        switching = true;
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>AIQ Get Results</h1>
@@ -183,9 +266,12 @@ for serial_data in wholeNumbers.values():
     all_keys.update(serial_data.keys())
 
 # Create table headers
-html_content += "<tr><th>Serial Number</th>"
+html_content += "<tr>"
+html_content += '<th onclick="sortTable(0)">Serial Number</th>'
+column_index = 1
 for key in sorted(all_keys):
-    html_content += f"<th>{key}</th>"
+    html_content += f'<th onclick="sortTable({column_index})">{key}</th>'
+    column_index += 1
 html_content += "</tr>"
 
 # Add data rows

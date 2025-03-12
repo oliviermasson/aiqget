@@ -26,9 +26,6 @@ class refreshToken:
         if 'debug' in kwargs.keys():
             self.debug=kwargs['debug']
 
-        if self.debug & 1:
-            userio.message('',service=localapi + ":INIT")
-
         return
     
     def showDebug(self):
