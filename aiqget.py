@@ -153,48 +153,50 @@ for serial in Efficiency.aggrEfficiency.keys():
 #print(wholeNumbers)    
 
 # Create HTML output
-html_content = """
+current_datetime = datetime.now().strftime('%d-%m-%Y %H:%M')
+
+html_content = f"""
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AIQ Get Results</title>
+    <title>AIQ Get Results - {current_datetime}</title>
     <style>
-        table {
+        table {{
             border-collapse: collapse;
             width: 100%;
             margin: 20px 0;
-        }
-        th, td {
+        }}
+        th, td {{
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
-        }
-        th {
+        }}
+        th {{
             background-color: #0066cc;
             color: white;
             cursor: pointer;
             position: relative;
-        }
-        th::after {
+        }}
+        th::after {{
             content: '⇕';
             position: absolute;
             right: 8px;
             color: rgba(255,255,255,0.5);
-        }
-        th.asc::after {
+        }}
+        th.asc::after {{
             content: '↓';
             color: white;
-        }
-        th.desc::after {
+        }}
+        th.desc::after {{
             content: '↑';
             color: white;
-        }
-        tr:nth-child(even) {
+        }}
+        tr:nth-child(even) {{
             background-color: #f2f2f2;
-        }
+        }}
     </style>
     <script>
-        function sortTable(n) {
+        function sortTable(n) {{
             var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
             table = document.querySelector("table");
             switching = true;
@@ -202,18 +204,18 @@ html_content = """
             
             // Remove sorting indicators from all headers
             var headers = table.getElementsByTagName("th");
-            for (i = 0; i < headers.length; i++) {
+            for (i = 0; i < headers.length; i++) {{
                 headers[i].classList.remove("asc", "desc");
-            }
+            }}  
             
             // Add sorting indicator to clicked header
             headers[n].classList.add(dir);
             
-            while (switching) {
+            while (switching) {{
                 switching = false;
                 rows = table.rows;
                 
-                for (i = 1; i < (rows.length - 1); i++) {
+                for (i = 1; i < (rows.length - 1); i++) {{
                     shouldSwitch = false;
                     x = rows[i].getElementsByTagName("td")[n];
                     y = rows[i + 1].getElementsByTagName("td")[n];
@@ -223,47 +225,47 @@ html_content = """
                     let yContent = y.innerHTML.trim();
                     
                     // Try to convert to numbers if they look like numbers
-                    if (xContent.match(/^-?\d*\.?\d+$/) && yContent.match(/^-?\d*\.?\d+$/)) {
+                    if (xContent.match(/^-?\d*\.?\d+$/) && yContent.match(/^-?\d*\.?\d+$/)) {{
                         xContent = parseFloat(xContent);
                         yContent = parseFloat(yContent);
-                    } else {
+                    }} else {{
                         // Case insensitive string comparison
                         xContent = xContent.toLowerCase();
                         yContent = yContent.toLowerCase();
-                    }
+                    }}
                     
                     
-                    if (dir == "asc") {
-                        if (xContent > yContent) {
+                    if (dir == "asc") {{
+                        if (xContent > yContent) {{
                             shouldSwitch = true;
                             break;
-                        }
-                    } else if (dir == "desc") {
-                        if (xContent < yContent) {
+                        }}
+                    }} else if (dir == "desc") {{
+                        if (xContent < yContent) {{
                             shouldSwitch = true;
                             break;
-                        }
-                    }
-                }
+                        }}
+                    }}
+                }}
                 
-                if (shouldSwitch) {
+                if (shouldSwitch) {{
                     rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
                     switching = true;
                     switchcount++;
-                } else {
-                    if (switchcount == 0 && dir == "asc") {
+                }} else {{
+                    if (switchcount == 0 && dir == "asc") {{
                         dir = "desc";
                         headers[n].classList.remove("asc");
                         headers[n].classList.add("desc");
                         switching = true;
-                    }
-                }
-            }
-        }
+                    }}
+                }}
+            }}
+        }}
     </script>
 </head>
 <body>
-    <h1>AIQ Get Results</h1>
+    <h1>AIQ Get Results - {current_datetime}</h1>
     <table>
 """
 
