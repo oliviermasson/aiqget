@@ -189,17 +189,35 @@ if bandwidth:
         avgBandwidth.showDebug()
 
 userio.message("Aggregate all information...")
-wholeNumbers=Efficiency.aggrEfficiency.copy()
-for serial in Efficiency.aggrEfficiency.keys():
-    wholeNumbers[serial].update(Capacity.aggrCapacity[serial])
-    wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
-    wholeNumbers[serial].update(Information.aggrInformation[serial])
+wholeNumbers=Capacity.aggrCapacity.copy()
+for serial in Capacity.aggrCapacity.keys():
+    try:
+        wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
+    except:
+        userio.message(f"Warning: Efficiency data not available for {serial}.")
+    try:
+        wholeNumbers[serial].update(Capacity.aggrCapacity[serial])
+    except:
+        userio.message(f"Warning: Capacity data not available for {serial}.")
+    try:
+        wholeNumbers[serial].update(Information.aggrInformation[serial])
+    except:
+        userio.message(f"Warning: Information data not available for {serial}.")
     if protoIOPS:
-        wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
+        try:
+            wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
+        except:
+            userio.message(f"Warning: Protocols IOPS data not available for {serial}.")
     if overallIOPS:
-        wholeNumbers[serial].update(avgIOPS.aggrOverall[serial])
+        try:
+            wholeNumbers[serial].update(avgIOPS.aggrOverall[serial])
+        except:
+            userio.message(f"Warning: Overall IOPS data not available for {serial}.")
     if bandwidth:
-        wholeNumbers[serial].update(avgBandwidth.aggrBandwidth[serial])
+        try:
+            wholeNumbers[serial].update(avgBandwidth.aggrBandwidth[serial])
+        except:
+            userio.message(f"Warning: Bandwidth data not available for {serial}.")
 
 #print(wholeNumbers)    
 

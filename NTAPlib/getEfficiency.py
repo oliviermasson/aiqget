@@ -56,7 +56,8 @@ class getEfficiency:
                 self.response=rest.response
                 if self.debug & 4:
                     self.showDebug()
-                self.aggrEfficiency[self.response['results']['efficiency']['systems']['system'][0]['serial_number']]={'effRatio':str(self.response['results']['efficiency']['systems']['system'][0]['node_overall_efficiency_ratio_without_clone_snapshot'])+":1"}
+                if len(self.response['results']['efficiency']['systems']['system']) > 0:
+                    self.aggrEfficiency[self.response['results']['efficiency']['systems']['system'][0]['serial_number']]={'effRatio':str(self.response['results']['efficiency']['systems']['system'][0]['node_overall_efficiency_ratio_without_clone_snapshot'])+":1"}
             else:
                 self.result=1
                 self.reason=rest.reason
