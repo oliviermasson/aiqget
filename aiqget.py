@@ -15,12 +15,42 @@ import doREST
 from refreshToken import refreshToken
 from getEfficiency import getEfficiency
 from getCapacity import getCapacity
+from getInformation import getInformation
 from getHeadroom import getHeadroom
 from getProtocolsIOPS import getProtocolsIOPS
 from getOverallIOPS import getOverallIOPS
 from getBandwidth import getBandwidth
 import userio
 from datetime import datetime,timedelta
+import re
+from bs4 import BeautifulSoup  
+
+# Fonction pour analyser le tableau HTML existant
+def parse_existing_table(file_path):
+    if not os.path.exists(file_path):
+        return {}
+    userio.message(f"Comparing results with previous file [{file_path}]...")
+    with open(file_path, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+    table = soup.find("table")
+    if not table:
+        return {}
+
+    data = {}
+    headers = [th.text.strip() for th in table.find_all("th")]
+    rows = table.find_all("tr")[1:]  # Ignorer la ligne des en-têtes
+
+    for row in rows:
+        cells = row.find_all("td")
+        serial = cells[0].text.strip()
+        data[serial] = {}
+        for i, cell in enumerate(cells[1:], start=1):
+            # Supprimer les variations entre crochets (e.g., [10%])
+            value = re.sub(r"\[.*?\]", "", cell.text.strip()).strip()
+            data[serial][headers[i]] = value
+
+    return data
 
 aiqget='1.0'
 
@@ -32,6 +62,7 @@ validoptions={'serialnumbers':'str',
               'customer':'str',
               'protoIOPS': 'bool',
               'bandwidth': 'bool',
+              'previous_file': 'str',
               'overallIOPS': 'bool'}
 
 requiredoptions=['serialnumbers','customer','refreshToken']
@@ -47,6 +78,8 @@ usage="Version " + aiqget + "\n" + \
       "       [--days]\n" + \
       "         (optional. Number of days to compute all performances metrics average)\n" + \
       "         (Default to 31 days before current date)\n\n" + \
+      "       [--previous_file]\n" + \
+      "         (optional. previous generated HMTL report to compage actual values with)\n\n" + \
       "       [--protoIOPS]\n" + \
       "         (optional. retrieve Protocols IOPS)\n\n" + \
       "       [--overallIOPS]\n" + \
@@ -95,6 +128,18 @@ try:
 except:
     bandwidth=False
 
+try:
+    previous_file = myopts.previous_file
+    userio.message(f"previous_file passed {previous_file}")
+except:
+    previous_file = None
+
+if previous_file is None:
+    if bandwidth or overallIOPS or protoIOPS:
+        previous_file = customer+"_Perf_aiqget_results.html"
+    else:
+        previous_file = customer+"_aiqget_results.html"
+    userio.message(f"previous_file generated {previous_file}")
 
 userio.message("Refresh AIQ access token...")
 tokens=refreshToken("api.activeiq.netapp.com",refresh_Token=refresh_Token,debug=debug)
@@ -120,6 +165,11 @@ Headroom=getHeadroom("api.activeiq.netapp.com",access_token=tokens.access_Token,
 if not Headroom.go():
     Headroom.showDebug()
 
+userio.message("Retrieve Node Information...")
+Information=getInformation("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
+if not Information.go():
+    Information.showDebug()
+
 if protoIOPS:
     userio.message("Retrieve Protocols IOPS information...")
     ProtocolsIOPS=getProtocolsIOPS("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
@@ -143,6 +193,7 @@ wholeNumbers=Efficiency.aggrEfficiency.copy()
 for serial in Efficiency.aggrEfficiency.keys():
     wholeNumbers[serial].update(Capacity.aggrCapacity[serial])
     wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
+    wholeNumbers[serial].update(Information.aggrInformation[serial])
     if protoIOPS:
         wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
     if overallIOPS:
@@ -155,11 +206,20 @@ for serial in Efficiency.aggrEfficiency.keys():
 # Create HTML output
 current_datetime = datetime.now().strftime('%d-%m-%Y %H:%M')
 
+# Charger les données du tableau précédent si le fichier existe
+previous_data = {}
+compared_with = ""
+if previous_file:
+    if os.path.exists(previous_file):
+        previous_data = parse_existing_table(previous_file)
+        compared_with=f" (compared with {previous_file})"
+
+
 html_content = f"""
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AIQ Get Results - {current_datetime}</title>
+    <title>AIQ Get Results - {current_datetime}{compared_with}</title>
     <style>
         table {{
             border-collapse: collapse;
@@ -193,6 +253,12 @@ html_content = f"""
         }}
         tr:nth-child(even) {{
             background-color: #f2f2f2;
+        }}
+        .positive {{
+            color: green;
+        }}
+        .negative {{
+            color: orange;
         }}
     </style>
     <script>
@@ -265,7 +331,7 @@ html_content = f"""
     </script>
 </head>
 <body>
-    <h1>AIQ Get Results - {current_datetime}</h1>
+    <h1>AIQ Get Results - {current_datetime}{compared_with}</h1>
     <table>
 """
 
@@ -283,12 +349,40 @@ for key in sorted(all_keys):
     column_index += 1
 html_content += "</tr>"
 
-# Add data rows
+# Ajouter les lignes de données avec comparaison
 for serial, data in wholeNumbers.items():
     html_content += f"<tr><td>{serial}</td>"
     for key in sorted(all_keys):
-        value = data.get(key, "N/A")
-        html_content += f"<td>{value}</td>"
+        current_value = data.get(key, "N/A")
+        previous_value = previous_data.get(serial, {}).get(key, None)
+
+        # Comparer les colonnes spécifiées
+        if key in ["CapacityUsed%", "availTB", "avgCPUheadroom%", "effRatio"] and previous_value is not None:
+            try:
+                # Convertir les valeurs en float pour la comparaison
+                current_value_float = float(current_value)
+                previous_value_float = float(previous_value)
+
+                # Calculer la variation en pourcentage
+                variation = ((current_value_float - previous_value_float) / previous_value_float) * 100
+
+                # Formater la variation avec une couleur
+                if variation > 0:
+                    variation_html = f'<span class="positive">[+{variation:.2f}%]</span>'
+                else:
+                    variation_html = f'<span class="negative">[{variation:.2f}%]</span>'
+
+                # Ajouter la variation à la valeur actuelle
+                if variation != 0:
+                    html_content += f"<td>{current_value} {variation_html}</td>"
+                else:
+                    html_content += f"<td>{current_value}</td>"
+            except ValueError:
+                # Si la conversion échoue, afficher uniquement la valeur actuelle
+                html_content += f"<td>{current_value}</td>"
+        else:
+            # Pas de comparaison, afficher uniquement la valeur actuelle
+            html_content += f"<td>{current_value}</td>"
     html_content += "</tr>"
 
 html_content += """
