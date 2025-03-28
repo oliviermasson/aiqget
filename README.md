@@ -32,9 +32,9 @@ Click on generate token and respond the questions
 ![alt text](image.png)  
 To obtain your access_Token and refresh_Token
 
-If the script find a previous version of HTML results, it will parse it and add to the new generated file,\
-the percentage of variation for each counter.\
-Which will help you quickly see the trend for each serialnumber and each counter\
+If the script finds a previous version of the HTML results,\
+ it will analyze it and add the percentage variation for each counter to the newly generated file.\
+This allows you to quickly see the trend for each serial number and counter.
 
 Example of basics results :
 ![alt text](image-1.png)
