@@ -192,13 +192,13 @@ userio.message("Aggregate all information...")
 wholeNumbers=Capacity.aggrCapacity.copy()
 for serial in Capacity.aggrCapacity.keys():
     try:
+        wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
+    except:
+        userio.message(f"Warning: Headroom data not available for {serial}.")
+    try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
         userio.message(f"Warning: Efficiency data not available for {serial}.")
-    try:
-        wholeNumbers[serial].update(Capacity.aggrCapacity[serial])
-    except:
-        userio.message(f"Warning: Capacity data not available for {serial}.")
     try:
         wholeNumbers[serial].update(Information.aggrInformation[serial])
     except:
@@ -375,14 +375,17 @@ for serial, data in wholeNumbers.items():
         previous_value = previous_data.get(serial, {}).get(key, None)
 
         # Comparer les colonnes spécifiées
-        if key in ["CapacityUsed%", "availTB", "avgCPUheadroom%", "effRatio"] and previous_value is not None:
+        if key not in ["Serial Number", "clusterName", "hostName", "effRatio", "model", "release", "site_name"] and previous_value is not None:
             try:
                 # Convertir les valeurs en float pour la comparaison
                 current_value_float = float(current_value)
                 previous_value_float = float(previous_value)
 
                 # Calculer la variation en pourcentage
-                variation = ((current_value_float - previous_value_float) / previous_value_float) * 100
+                try:
+                    variation = ((current_value_float - previous_value_float) / previous_value_float) * 100
+                except:
+                    variation = 0
 
                 # Formater la variation avec une couleur
                 if variation > 0:

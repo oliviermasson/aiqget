@@ -9,6 +9,8 @@ AIQget is a python script which retreive the following information from AIQ:
     % capacity used
     capacity available
 
+All columns are sortable
+
 It use Python 3.10.
 
 You just need to provide a comma-separated list of the serialnumber you want:
@@ -29,4 +31,14 @@ Go to [activeiq.netapp.com/api](https://activeiq.netapp.com/api)
 Click on generate token and respond the questions  
 ![alt text](image.png)  
 To obtain your access_Token and refresh_Token
+
+If the script find a previous version of HTML results, it will parse it and add to the new generated file,\
+the percentage of variation for each counter.\
+Which will help you quickly see the trend for each serialnumber and each counter\
+
+Example of basics results :
+![alt text](image-1.png)
+
+Example of results with all performances counters :
+![alt text](image-3.png)
 
