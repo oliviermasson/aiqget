@@ -56,8 +56,8 @@ class getInformation:
             if self.debug & 4:
                 self.showDebug()
             for serialIndex in range(len(self.response['results'])):
-                self.aggrInformation[self.response['results'][serialIndex]['serial_number']]={'site_name':self.response['results'][serialIndex]['site_name'],
-                                                                                       'model':self.response['results'][serialIndex]['model']}
+                self.aggrInformation[self.response['results'][serialIndex]['serial_number']]={'Site_Name':self.response['results'][serialIndex]['site_name'],
+                                                                                       'Model':self.response['results'][serialIndex]['model']}
             return(True)
         else:
             self.result=1
