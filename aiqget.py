@@ -225,9 +225,10 @@ previous_data = {}
 compared_with = ""
 if previous_file:
     if os.path.exists(previous_file):
-        previous_data = parse_existing_table(previous_file)
-        compared_with=f" (compared with {previous_file})"
-
+        previous_data = parse_existing_table(previous_file) 
+        file_time = os.path.getctime(previous_file)
+        creation_date = datetime.fromtimestamp(file_time).strftime('%d-%m-%Y %H:%M')
+        compared_with=f" (compared with {previous_file} created on {creation_date})"
 
 html_content = f"""
 <!DOCTYPE html>
@@ -276,6 +277,11 @@ html_content = f"""
         }}
     </style>
     <script>
+        function extractNumber(cellContent) {{
+            let match = cellContent.replace(',', '.').match(/-?\d+(\.\d+)?/);
+            return match ? parseFloat(match[0]) : NaN;
+        }}
+
         function sortTable(n) {{
             var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
             table = document.querySelector("table");
@@ -303,18 +309,17 @@ html_content = f"""
                     // Convert to number if possible and handle decimal numbers
                     let xContent = x.innerHTML.trim();
                     let yContent = y.innerHTML.trim();
-                    
-                    // Try to convert to numbers if they look like numbers
-                    if (xContent.match(/^-?\d*\.?\d+$/) && yContent.match(/^-?\d*\.?\d+$/)) {{
-                        xContent = parseFloat(xContent);
-                        yContent = parseFloat(yContent);
+
+                    let xNum = extractNumber(xContent);
+                    let yNum = extractNumber(yContent);
+                    if (!isNaN(xNum) && !isNaN(yNum)) {{
+                        xContent = xNum;
+                        yContent = yNum;
                     }} else {{
-                        // Case insensitive string comparison
                         xContent = xContent.toLowerCase();
                         yContent = yContent.toLowerCase();
                     }}
-                    
-                    
+
                     if (dir == "asc") {{
                         if (xContent > yContent) {{
                             shouldSwitch = true;
