@@ -1,4 +1,5 @@
 .vscode/launch.json
+.venv/*
 *.html
 *.sh
 cnpget.sh

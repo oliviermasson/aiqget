@@ -34,7 +34,9 @@ class refreshToken:
     def go(self,**kwargs):
 
         headers = {'content-type': "application/json",
-           'accept': "application/json"}
+           'accept': "application/json",
+           'User-Agent': "test",
+           'Connection': "keep-alive"}
         # headers['AuthorizationToken']=self.refresh_Token
 
         json={'refresh_token':self.refresh_Token}

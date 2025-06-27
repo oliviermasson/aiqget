@@ -1,4 +1,4 @@
-#! /usr/bin/python3.10
+#! /usr/bin/python3.12
 
 import sys
 
@@ -226,9 +226,9 @@ compared_with = ""
 if previous_file:
     if os.path.exists(previous_file):
         previous_data = parse_existing_table(previous_file) 
-        file_time = os.path.getctime(previous_file)
+        file_time = os.path.getmtime(previous_file)
         creation_date = datetime.fromtimestamp(file_time).strftime('%d-%m-%Y %H:%M')
-        compared_with=f" (compared with {previous_file} created on {creation_date})"
+        compared_with=f" (compared with {previous_file} last modified on {creation_date})"
 
 html_content = f"""
 <!DOCTYPE html>
