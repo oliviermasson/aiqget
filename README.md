@@ -24,6 +24,14 @@ It will then generate an HTML file with associated results named :
 
 Script will also rename existing HTML file
 
+You can also provide only your `customer_name` (in quotation marks if there are spaces in the name) and the script will search for all ONTAP serial numbers (E-series and StorageGRID are not currently supported).
+
+`python3 aiqget.py --customer_name "we build some stuff" --refresh_Token <you refresh token>`
+
+If the script detects several clients matching the name provided, it will either suggest you refine your search and start again, or merge all serial numbers into a single table.
+
+![alt text](image-2.png)
+
 `refresh_Token` is a required parameter
 
 You must register ActiveIQ API services to get a refresh_Token before running this script.  

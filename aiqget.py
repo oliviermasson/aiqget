@@ -13,6 +13,7 @@ from getEfficiency import getEfficiency
 from getCapacity import getCapacity
 from getInformation import getInformation
 from getHeadroom import getHeadroom
+from getClientID import getClientID
 from getProtocolsIOPS import getProtocolsIOPS
 from getOverallIOPS import getOverallIOPS
 from getBandwidth import getBandwidth
@@ -56,16 +57,25 @@ validoptions={'serialnumbers':'str',
               'restdebug':'bool',
               'days':'int',
               'customer':'str',
+              'customer_name':'str',
               'protoIOPS': 'bool',
               'bandwidth': 'bool',
               'previous_file': 'str',
-              'overallIOPS': 'bool'}
+              'overallIOPS': 'bool',
+              'access_Token': 'str'}
 
-requiredoptions=['serialnumbers','customer','refreshToken']
+#requiredoptions=['refreshToken']
+#requiredoptions=['access_Token']
+mutexoptions=['serialnumbers', 'customer_name']
+dependentoptions={'customer':'serialnumbers'}
 
 usage="Version " + aiqget + "\n" + \
       "aiqget --serialnumbers\n" + \
-      "         (Required. List of serial numbers provided as comma separeted list)\n" + \
+      "         (List of serial numbers provided as comma separeted list)\n" + \
+      "         \n" + \
+      "       --customer_name\n" + \
+      "         (customer name from which we will retrieve all ontap serialnumbers)\n" + \
+      "         (serialnumbers and customer_name are mutualy exclusive, you need to provide only one or the other\n" + \
       "         \n" + \
       "       --customer\n" + \
       "         (Required. Customer identifier that will be added as a prefix to the generated HTML file)\n\n" + \
@@ -87,15 +97,38 @@ usage="Version " + aiqget + "\n" + \
       "       [--restdebug]\n" + \
       "         (optional. Show REST API calls and responses)\n\n" 
 
-myopts=userio.validateoptions(sys.argv,validoptions,usage=usage,required=requiredoptions)
+#myopts=userio.validateoptions(sys.argv,validoptions,usage=usage,required=requiredoptions,mutex=mutexoptions,dependent=dependentoptions)
+myopts=userio.validateoptions(sys.argv,validoptions,usage=usage,mutex=mutexoptions,dependent=dependentoptions)
 
-serialnumbers=myopts.serialnumbers.split(',')
+try:
+    serialnumbers=myopts.serialnumbers.split(',')
+except:
+    serialnumbers=None
 
-customer=myopts.customer
+try:
+    customer=myopts.customer
+except:
+    customer=None
 
-days=myopts.days
+try:
+    customer_name=myopts.customer_name
+except:
+    customer_name=None
 
-refresh_Token=myopts.refresh_Token
+try:
+    days=myopts.days
+except:
+    days=None
+try:
+    refresh_Token=myopts.refresh_Token
+except:
+    refresh_Token=None
+
+try:
+    access_Token=myopts.access_Token 
+    tokens={'access_Token': access_Token} 
+except:
+    access_Token=None
 
 if days is not None:
     days=int(days)
@@ -130,21 +163,49 @@ try:
 except:
     previous_file = None
 
-if previous_file is None:
-    if bandwidth or overallIOPS or protoIOPS:
-        previous_file = customer+"_Perf_aiqget_results.html"
-    else:
-        previous_file = customer+"_aiqget_results.html"
-    userio.message(f"previous_file generated {previous_file}")
+if customer is not None:
+    if previous_file is None:
+        if bandwidth or overallIOPS or protoIOPS:
+            previous_file = customer+"_Perf_aiqget_results.html"
+        else:
+            previous_file = customer+"_aiqget_results.html"
+        userio.message(f"previous_file generated {previous_file}")
+else:
+    if previous_file is None:
+        if bandwidth or overallIOPS or protoIOPS:
+            previous_file = customer_name+"_Perf_aiqget_results.html"
+        else:
+            previous_file = customer_name+"_aiqget_results.html"
+        userio.message(f"previous_file generated {previous_file}")   
 
-userio.message("Refresh AIQ access token...")
-tokens=refreshToken("api.activeiq.netapp.com",refresh_Token=refresh_Token,debug=debug)
-if not tokens.go():
-    tokens.showDebug()
+if(access_Token is None):
+    userio.message("Refresh AIQ access token...")
+    tokens=refreshToken("api.activeiq.netapp.com",refresh_Token=refresh_Token,debug=debug)
+    if not tokens.go():
+        tokens.showDebug()
+else:
+    userio.message("Using provided AIQ access_Token...")
+    class tokens:
+
+        def __init__(self,access_token):
+            self.access_Token = access_token
+    
+    tokens=tokens(access_token=access_Token)
 
 today=datetime.now().strftime('%Y-%m-%d')
 before=(datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
 
+if customer_name is not None:
+    userio.message("Retrieve ClientID and associated ONTAP serialnumbers for customer [" + customer_name + "]...")
+    ClientID=getClientID("api.activeiq.netapp.com",access_token=tokens.access_Token,customer_name=customer_name,debug=debug)
+    if not ClientID.go():
+        ClientID.showDebug()
+        exit(1)
+    serialnumbers=ClientID.listSerialNumbers
+
+if(len(serialnumbers) == 0):
+    userio.message("No serialnumbers provided, exiting...")
+    exit(0)
 
 userio.message("Retrieve Efficiency information...")
 Efficiency=getEfficiency("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)
@@ -414,6 +475,8 @@ html_content += """
 """
 
 # Write the HTML file
+if customer_name is not None:
+    customer = customer_name
 if bandwidth or overallIOPS or protoIOPS:
     output_file = customer+"_Perf_aiqget_results.html"
 else:
