@@ -141,15 +141,15 @@ def validateoptions(sysargs,validoptions,**kwargs):
                 fail("Arguments " + ','.join(item) + " are mutually exclusive")
     
     if 'dependent' in kwargs.keys():
-        for key in kwargs['dependent'].keys():
-            if key in returndict['OPTS'].keys():
-                for item in kwargs['dependent'][key]:
-                    if type(item) is str:
-                        if item not in returndict['OPTS'].keys():
-                            fail("Argument --" + key + " requires the use of ---" + item)
-                    elif type(item) is list:
-                        if not set(item).intersection(set(returndict['OPTS'].keys())):
-                            fail("Argument --" + key + " requires one of the following arguments: --" + ' --'.join(item))
+        for key in kwargs['dependent']:
+            if key in passedargs:
+                item = kwargs['dependent'][key]
+                if type(item) is str:
+                    if item not in passedargs:
+                        fail("Argument --" + key + " requires the use of --" + item)
+                elif type(item) is list:
+                    if not set(item).intersection(set(passedargs)):
+                        fail("Argument --" + key + " requires one of the following arguments: --" + ' --'.join(item))
     
     return(args)
 
