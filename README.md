@@ -42,7 +42,10 @@ To obtain your access_Token and refresh_Token
 
 If the script finds a previous version of the HTML results,\
  it will analyze it and add the percentage variation for each counter to the newly generated file.\
-This allows you to quickly see the trend for each serial number and counter.
+This allows you to quickly see the trend for each serial number and counter.\
+Each column of the generated HMTL file are sortable.\
+And the column HostName can be filtered to search for particular controler.
+
 
 Example of basics results :
 ![alt text](image-1.png)
