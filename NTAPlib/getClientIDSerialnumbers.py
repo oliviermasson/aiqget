@@ -63,10 +63,11 @@ class getClientIDSerialnumbers:
                             userio.message("Add serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
                     else:
                         if self.debug & 1:
-                            userio.message("Find: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] plateforme: [" + equipment['platform_type'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")    
+                            userio.message("Find serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] plateforme: [" + equipment['platform_type'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")    
                     if len(self.list) == 0:
                         userio.message("No ONTAP serialnumbers found for clientID [" + self.clientID + "]")
                         return(False)
+            userio.message("\n")
             return(True)
         else:
             self.result=1

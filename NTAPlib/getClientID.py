@@ -75,7 +75,7 @@ class getClientID:
                 listclientID.append(self.response['results'][0]['id'])
             listSerialnumbers=[]
             for clientID in listclientID:
-                userio.message("\nGet serialnumbers for ClientID: [" + clientID + "]")
+                #userio.message("\nGet serialnumbers for ClientID: [" + clientID + "]")
                 self.serialnumbers=getClientIDSerialnumbers("api.activeiq.netapp.com",access_token=self.access_Token,clientID=clientID,debug=self.debug)
                 if not self.serialnumbers.go():
                     self.serialnumbers.showDebug()
