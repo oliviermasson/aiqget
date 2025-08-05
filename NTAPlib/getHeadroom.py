@@ -61,8 +61,11 @@ class getHeadroom:
                 avgCPUheadroom=0
                 for CPUTime in self.response['results']['counterData'].keys():
                     avgCPUheadroom += self.response['results']['counterData'][CPUTime]['current_utilization']
-                avgCPUheadroom /= len(self.response['results']['counterData'])
-                avgCPUheadroom = round(avgCPUheadroom, 2)
+                if len(self.response['results']['counterData']) > 0:
+                    avgCPUheadroom /= len(self.response['results']['counterData'])
+                    avgCPUheadroom = round(avgCPUheadroom, 2)
+                else:
+                    avgCPUheadroom = 0.0
                 self.aggrHeadroom[self.response['results']['serialNumber']]={'avgCPUheadroom%':avgCPUheadroom}
             else:
                 self.result=1
