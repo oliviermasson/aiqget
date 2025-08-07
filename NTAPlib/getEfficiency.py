@@ -58,6 +58,8 @@ class getEfficiency:
                     self.showDebug()
                 if len(self.response['results']['efficiency']['systems']['system']) > 0:
                     self.aggrEfficiency[self.response['results']['efficiency']['systems']['system'][0]['serial_number']]={'effRatio':str(self.response['results']['efficiency']['systems']['system'][0]['node_overall_efficiency_ratio_without_clone_snapshot'])+":1"}
+                else:
+                    print("No data found for S/N " + serialnumber)
             else:
                 self.result=1
                 self.reason=rest.reason

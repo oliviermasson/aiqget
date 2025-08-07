@@ -1,5 +1,3 @@
-#! /usr/bin/python3.12
-
 import sys
 
 sys.path.append(sys.path[0] + "/NTAPlib")
@@ -49,7 +47,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.4'
+aiqget='1.5'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -263,14 +261,17 @@ for serial in Capacity.aggrCapacity.keys():
         wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
     except:
         userio.message(f"Warning: Headroom data not available for {serial}.")
+        wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
         userio.message(f"Warning: Efficiency data not available for {serial}.")
+        wholeNumbers[serial].update({'effRatio': 'unknow'})
     try:
         wholeNumbers[serial].update(Information.aggrInformation[serial])
     except:
         userio.message(f"Warning: Information data not available for {serial}.")
+        wholeNumbers[serial].update({'Site_Name': 'unknow', 'Model': 'unknow'})
     if protoIOPS:
         try:
             wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])

@@ -31,19 +31,9 @@ class getInformation:
     def showDebug(self):
         userio.debug(self)
 
-    def go(self,**kwargs):
-
-        headers = {'content-type': "application/json",
-           'accept': "application/json"}
-        headers['AuthorizationToken']=self.access_Token
-
-        if 'apicaller' in kwargs.keys():
-            self.apicaller=kwargs['apicaller']
-        localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrInformation={}
-
+    def proceedSerialList(self,serialnumberslist,headers):
         #* work all serials at once
-        serials = ','.join(self.serialnumbers)
+        serials = ','.join(serialnumberslist)
         api=self.api + serials
         if self.debug & 1:
             userio.message("Retrieve Information for S/N " + serials + "...")
@@ -55,10 +45,14 @@ class getInformation:
             self.response=rest.response
             if self.debug & 4:
                 self.showDebug()
-            for serialIndex in range(len(self.response['results'])):
-                self.aggrInformation[self.response['results'][serialIndex]['serial_number']]={'Site_Name':self.response['results'][serialIndex]['site_name'],
-                                                                                       'Model':self.response['results'][serialIndex]['model']}
-            return(True)
+            if len(self.response) > 0:
+                for serialIndex in range(len(self.response['results'])):
+                    self.aggrInformation[self.response['results'][serialIndex]['serial_number']]={'Site_Name':self.response['results'][serialIndex]['site_name'],
+                                                                                        'Model':self.response['results'][serialIndex]['model']}
+                return(True)
+            else:
+                print("No data found for S/N " + serials)
+                return(True)
         else:
             self.result=1
             self.reason=rest.reason
@@ -67,4 +61,28 @@ class getInformation:
             if self.debug & 4:
                 self.showDebug()
             return(False)
+        
+    def go(self,**kwargs):
+
+        headers = {'content-type': "application/json",
+           'accept': "application/json"}
+        headers['AuthorizationToken']=self.access_Token
+
+        if 'apicaller' in kwargs.keys():
+            self.apicaller=kwargs['apicaller']
+        localapi='->'.join([self.apicaller,self.apibase + ".go"])
+        self.aggrInformation={}
+
+        if len(self.serialnumbers) <= 50:
+            #* work all serials at once
+            return self.proceedSerialList(self.serialnumbers,headers)
+        else:    
+            #* too many serials, split them up
+            chunk_size = 50
+            for i in range(0, len(self.serialnumbers), chunk_size):
+                chunk = self.serialnumbers[i:i + chunk_size]
+                if not self.proceedSerialList(chunk, headers):
+                    return False  # Arrêter en cas d'échec
+            
+            return True
         
