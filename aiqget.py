@@ -47,7 +47,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.5'
+aiqget='1.7'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
