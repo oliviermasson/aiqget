@@ -22,8 +22,8 @@ def parse_percentage(text):
         return None
     
 def add_new_slide(pres, date, new_ppt_path=None):
-    # on recopie la premiere slide présente car c'est toujours la up to date slide
-    source_slide = pres.slides[0]
+    # on recopie la derniere slide présente car c'est toujours la up to date slide
+    source_slide = pres.slides[-1]
 
     # Blank slide layout is usually the last layout in the list
     try:
@@ -105,11 +105,12 @@ def update_ppt_from_html(ppt_path, html_path, slide_index=0):
     file_date = datetime.fromtimestamp(file_time).strftime('%m/%d/%Y')
 
     # Enregistrer les modifications
-    new_ppt_path = ppt_path.replace('.pptx', '_updated.pptx')
+    #new_ppt_path = ppt_path.replace('.pptx', '_updated.pptx')
     
 
     # Ajouter une nouvelle slide pour la date de modification
-    new_slide = add_new_slide(prs, file_date, new_ppt_path)
+    #new_slide = add_new_slide(prs, file_date, new_ppt_path)
+    new_slide = add_new_slide(prs, file_date, ppt_path)
    
     # Parser le contenu HTML pour trouver le tableau
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -167,8 +168,8 @@ def update_ppt_from_html(ppt_path, html_path, slide_index=0):
         else:
             print(f"row ignored, less than 11 columns: {row.get_text(strip=True)}")
     
-    prs.save(new_ppt_path)
-    print(f"\nPresentation updated and saved as: {new_ppt_path}")
+    prs.save(ppt_path)
+    print(f"\nPresentation updated and saved as: {ppt_path}")
 
 # Exemple d'utilisation
 if __name__ == "__main__":
