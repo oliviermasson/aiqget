@@ -108,7 +108,7 @@ def update_ppt_from_html(ppt_path, html_path, slide_index=0):
     new_ppt_path = ppt_path.replace('.pptx', '_updated.pptx')
     
 
-    # Ajouter une nouvelle diapositive pour la date de modification
+    # Ajouter une nouvelle slide pour la date de modification
     new_slide = add_new_slide(prs, file_date, new_ppt_path)
    
     # Parser le contenu HTML pour trouver le tableau
@@ -144,31 +144,31 @@ def update_ppt_from_html(ppt_path, html_path, slide_index=0):
                             sub_shape_value = parse_percentage(sub_shape.text_frame.text)
                             if sub_shape_value != float_value_capacity:
                                 modif_textbox(sub_shape, float_value_capacity, str(float_value_capacity), 70, 80)
-                                print(f"\tMise à jour capacity: {nodename} => {str(float_value_capacity)}%")
+                                print(f"\tUpdate capacity: {nodename} from {str(sub_shape_value)}% => {str(float_value_capacity)}%")
                             break
                         if sub_shape.name == str("headroom_" + nodename) and sub_shape.has_text_frame:
                             sub_shape_value = parse_percentage(sub_shape.text_frame.text)
                             if sub_shape_value != float_value_headroom:
                                 modif_textbox(sub_shape, float_value_headroom, str(float_value_headroom), 80, 90)
-                                print(f"\tMise à jour headroom: {nodename} => {str(float_value_headroom)}%")
+                                print(f"\tUpdate headroom: {nodename} from {str(sub_shape_value)}% => {str(float_value_headroom)}%")
                             break
                 if shape.name == str("capacity_" + nodename) and shape.has_text_frame:
                     shape_value = parse_percentage(shape.text_frame.text)
                     if shape_value != float_value_capacity:
                         modif_textbox(shape, float_value_capacity, str(float_value_capacity), 70, 80)
-                        print(f"Mise à jour capacity: {nodename} => {str(float_value_capacity)}%")
+                        print(f"Update capacity: {nodename} from {str(shape_value)}% => {str(float_value_capacity)}%")
                     break
                 if shape.name == str("headroom_" + nodename) and shape.has_text_frame:
                     shape_value = parse_percentage(shape.text_frame.text)
                     if shape_value != float_value_headroom:
                         modif_textbox(shape, float_value_headroom, str(float_value_headroom), 80, 90)
-                        print(f"Mise à jour headroom: {nodename} => {str(float_value_headroom)}%")
+                        print(f"Update headroom: {nodename} from {str(shape_value)}% => {str(float_value_headroom)}%")
                     break
         else:
-            print(f"Ligne ignorée, moins de 11 colonnes: {row.get_text(strip=True)}")
+            print(f"row ignored, less than 11 columns: {row.get_text(strip=True)}")
     
     prs.save(new_ppt_path)
-    print(f"\nPrésentation mise à jour enregistrée sous: {new_ppt_path}")
+    print(f"\nPresentation updated and saved as: {new_ppt_path}")
 
 # Exemple d'utilisation
 if __name__ == "__main__":
