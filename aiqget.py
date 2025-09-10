@@ -47,7 +47,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.7'
+aiqget='1.8'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -61,6 +61,8 @@ validoptions={'serialnumbers':'str',
               'previous_file': 'str',
               'overallIOPS': 'bool',
               'access_Token': 'str'}
+
+print(f"Running aiqget version {aiqget}\n")
 
 #requiredoptions=['refreshToken']
 #requiredoptions=['access_Token']
