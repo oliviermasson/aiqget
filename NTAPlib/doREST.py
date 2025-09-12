@@ -71,13 +71,13 @@ class doREST():
 
         try:
             if self.reqtype=="get":
-                response=requests.get(self.url,verify=False,headers=self.headers, timeout=10)
+                response=requests.get(self.url,verify=False,headers=self.headers, timeout=30)
             elif self.reqtype=="post":
-                response=requests.post(self.url,json=self.json,verify=False,headers=self.headers, timeout=10)
+                response=requests.post(self.url,json=self.json,verify=False,headers=self.headers, timeout=30)
             elif self.reqtype=="patch":
-                response=requests.patch(self.url,json=self.json,verify=False,headers=self.headers, timeout=10)
+                response=requests.patch(self.url,json=self.json,verify=False,headers=self.headers, timeout=30)
             elif self.reqtype=="delete":
-                response=requests.delete(self.url,verify=False,headers=self.headers, timeout=10)
+                response=requests.delete(self.url,verify=False,headers=self.headers, timeout=30)
             else:
                 self.result=1
                 self.reason="Unsupported request type"

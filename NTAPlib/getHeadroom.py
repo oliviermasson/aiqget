@@ -46,6 +46,7 @@ class getHeadroom:
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
         self.aggrHeadroom={}
+        value_missing=0
         for serialnumber in self.serialnumbers:
             api=self.api + serialnumber
             if self.debug & 1:
@@ -60,9 +61,16 @@ class getHeadroom:
                     self.showDebug()
                 avgCPUheadroom=0
                 for CPUTime in self.response['results']['counterData'].keys():
-                    avgCPUheadroom += self.response['results']['counterData'][CPUTime]['current_utilization']
-                avgCPUheadroom /= len(self.response['results']['counterData'])
-                avgCPUheadroom = round(avgCPUheadroom, 2)
+                    if 'current_utilization' in self.response['results']['counterData'][CPUTime].keys():
+                        avgCPUheadroom += self.response['results']['counterData'][CPUTime]['current_utilization']
+                    else:
+                        value_missing+=1
+                if len(self.response['results']['counterData']) > 0:
+                    avgCPUheadroom /= len(self.response['results']['counterData']) - value_missing
+                    avgCPUheadroom = round(avgCPUheadroom, 2)
+                else:
+                    print("No data found for S/N " + serialnumber)
+                    avgCPUheadroom = 0.0
                 self.aggrHeadroom[self.response['results']['serialNumber']]={'avgCPUheadroom%':avgCPUheadroom}
             else:
                 self.result=1

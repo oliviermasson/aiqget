@@ -1,5 +1,3 @@
-#! /usr/bin/python3.12
-
 import sys
 
 sys.path.append(sys.path[0] + "/NTAPlib")
@@ -49,7 +47,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.0'
+aiqget='1.8'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -63,6 +61,8 @@ validoptions={'serialnumbers':'str',
               'previous_file': 'str',
               'overallIOPS': 'bool',
               'access_Token': 'str'}
+
+print(f"Running aiqget version {aiqget}\n")
 
 #requiredoptions=['refreshToken']
 #requiredoptions=['access_Token']
@@ -195,6 +195,8 @@ else:
 today=datetime.now().strftime('%Y-%m-%d')
 before=(datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
 
+# recherche le clientID et les serialnumbers associés à un cutomer_name
+# pour l'instant serialnumbers ONTAP seulement...voir pour rajouter E-series et StorageGRID
 if customer_name is not None:
     userio.message("Retrieve ClientID and associated ONTAP serialnumbers for customer [" + customer_name + "]...")
     ClientID=getClientID("api.activeiq.netapp.com",access_token=tokens.access_Token,customer_name=customer_name,debug=debug)
@@ -203,48 +205,57 @@ if customer_name is not None:
         exit(1)
     serialnumbers=ClientID.listSerialNumbers
 
+# si aucun serialnulber trouvé, on sort
 if(len(serialnumbers) == 0):
     userio.message("No serialnumbers provided, exiting...")
     exit(0)
 
+# recuperation des valeurs d'efficiency
 userio.message("Retrieve Efficiency information...")
 Efficiency=getEfficiency("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)
 if not Efficiency.go():
     Efficiency.showDebug()
 
+# recuperation des valeurs de capacity
 userio.message("Retrieve Capacity information...")
 Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
 if not Capacity.go():
     Capacity.showDebug()
 
+# recuperation des valeurs du headroom CPU
 userio.message("Retrieve Headroom information...")
 Headroom=getHeadroom("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
 if not Headroom.go():
     Headroom.showDebug()
 
+# recuperation des informations sur les nodes
 userio.message("Retrieve Node Information...")
 Information=getInformation("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
 if not Information.go():
     Information.showDebug()
 
+# recuperation des valeurs de IOPS par protocol
 if protoIOPS:
     userio.message("Retrieve Protocols IOPS information...")
     ProtocolsIOPS=getProtocolsIOPS("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not ProtocolsIOPS.go():
         ProtocolsIOPS.showDebug()
 
+# recuperation des valeurs de IOPS globales
 if overallIOPS:
     userio.message("Retrieve avg IOPS information...")
     avgIOPS=getOverallIOPS("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not avgIOPS.go():
         avgIOPS.showDebug()
 
+# recuperation des valeurs de bande passante
 if bandwidth:
     userio.message("Retrieve Bandwidth information...")
     avgBandwidth=getBandwidth("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not avgBandwidth.go():
         avgBandwidth.showDebug()
 
+# assemblage de toutes les informations par serial number
 userio.message("Aggregate all information...")
 wholeNumbers=Capacity.aggrCapacity.copy()
 for serial in Capacity.aggrCapacity.keys():
@@ -252,14 +263,17 @@ for serial in Capacity.aggrCapacity.keys():
         wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
     except:
         userio.message(f"Warning: Headroom data not available for {serial}.")
+        wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
         userio.message(f"Warning: Efficiency data not available for {serial}.")
+        wholeNumbers[serial].update({'effRatio': 'unknow'})
     try:
         wholeNumbers[serial].update(Information.aggrInformation[serial])
     except:
         userio.message(f"Warning: Information data not available for {serial}.")
+        wholeNumbers[serial].update({'Site_Name': 'unknow', 'Model': 'unknow'})
     if protoIOPS:
         try:
             wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
@@ -274,9 +288,7 @@ for serial in Capacity.aggrCapacity.keys():
         try:
             wholeNumbers[serial].update(avgBandwidth.aggrBandwidth[serial])
         except:
-            userio.message(f"Warning: Bandwidth data not available for {serial}.")
-
-#print(wholeNumbers)    
+            userio.message(f"Warning: Bandwidth data not available for {serial}.")   
 
 # Create HTML output
 current_datetime = datetime.now().strftime('%d-%m-%Y %H:%M')
@@ -336,11 +348,86 @@ html_content = f"""
         .negative {{
             color: orange;
         }}
+        th.filtered::after {{
+            content: '🔍';
+            position: absolute;
+            right: 8px;
+            color: white;
+        }}
+        .reset-filter {{
+            margin: 10px 0;
+            padding: 8px 12px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }}
+        .reset-filter:hover {{
+            background-color: #0055aa;
+        }}
     </style>
     <script>
         function extractNumber(cellContent) {{
             let match = cellContent.replace(',', '.').match(/-?\d+(\.\d+)?/);
             return match ? parseFloat(match[0]) : NaN;
+        }}
+
+        function resetFilter() {{
+            const table = document.querySelector("table");
+            const rows = table.getElementsByTagName("tr");
+            const headers = rows[0].getElementsByTagName("th");
+            
+            // Réinitialiser l'affichage de toutes les lignes
+            for (let i = 1; i < rows.length; i++) {{
+                rows[i].style.display = "";
+            }}
+            
+            // Supprimer l'indicateur de filtre
+            for (let i = 0; i < headers.length; i++) {{
+                headers[i].classList.remove("filtered");
+            }}
+        }}
+
+        function filterByHostName() {{
+            const searchValue = prompt("Filter by HostName (leave empty to reset filter):");
+            if (searchValue === null) return; // L'utilisateur a annulé
+            
+            const table = document.querySelector("table");
+            const rows = table.getElementsByTagName("tr");
+            const headerCells = rows[0].getElementsByTagName("th");
+            
+            // Trouver l'index de la colonne HostName
+            let hostNameIndex = -1;
+            for (let i = 0; i < headerCells.length; i++) {{
+                if (headerCells[i].textContent.trim() === "HostName") {{
+                    hostNameIndex = i;
+                    break;
+                }}
+            }}
+            
+            if (hostNameIndex === -1) return; // Colonne HostName non trouvée
+            
+            // Parcourir toutes les lignes et cacher celles qui ne correspondent pas
+            for (let i = 1; i < rows.length; i++) {{
+                const row = rows[i];
+                const hostNameCell = row.getElementsByTagName("td")[hostNameIndex];
+                
+                if (searchValue === "" || hostNameCell.textContent.toLowerCase().includes(searchValue.toLowerCase())) {{
+                    row.style.display = "";
+                }} else {{
+                    row.style.display = "none";
+                }}
+            }}
+            
+            // Ajouter un indicateur de filtre actif à l'en-tête
+            for (let i = 0; i < headerCells.length; i++) {{
+                headerCells[i].classList.remove("filtered");
+            }}
+            
+            if (searchValue !== "") {{
+                headerCells[hostNameIndex].classList.add("filtered");
+            }}
         }}
 
         function sortTable(n) {{
@@ -425,7 +512,10 @@ html_content += "<tr>"
 html_content += '<th onclick="sortTable(0)">Serial Number</th>'
 column_index = 1
 for key in sorted(all_keys):
-    html_content += f'<th onclick="sortTable({column_index})">{key}</th>'
+    if key == "HostName":
+        html_content += f'<th onclick="filterByHostName()">{key}</th>'
+    else:
+        html_content += f'<th onclick="sortTable({column_index})">{key}</th>'
     column_index += 1
 html_content += "</tr>"
 
@@ -485,7 +575,7 @@ else:
 try:
     if os.path.exists(output_file):
         # Get file creation time (using modification time as fallback)
-        file_time = os.path.getctime(output_file)
+        file_time = os.path.getmtime(output_file)
         file_date = datetime.fromtimestamp(file_time).strftime('%Y%m%d_%H%M')
         if bandwidth or overallIOPS or protoIOPS:
             new_name = f"{customer}_Perf_aiqget_results_{file_date}.html"
