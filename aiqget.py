@@ -137,7 +137,7 @@ else:
     days=31
 
 debug=0
-if 'debug' in myopts:
+if myopts.debug:
     debug=debug+1
 
 if myopts.restdebug:
@@ -234,11 +234,19 @@ if not Efficiency.go():
     Efficiency.showDebug()
 
 # recuperation des valeurs de capacity
-# recuperation des valeurs de capacity
-userio.message("Retrieve Capacity information...")
+userio.message("Retrieve Node information...")
 Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
 if not Capacity.go():
     Capacity.showDebug()
+    
+
+# recuperation des capacity aggr via Cluster view API
+# car les mises à jour via AIQ Capacity sont décalées d'au moins 24h
+# alors que la vision clusterview est plus frequement mise à jour
+userio.message("Retrieve Clusterview Capacity information...")
+ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
+if not ClusterviewCapacity.go():
+    ClusterviewCapacity.showDebug()
 
 # recuperation des valeurs du headroom CPU
 userio.message("Retrieve Headroom information...")
@@ -283,7 +291,10 @@ for serial in ClusterviewCapacity.aggrCapacity.keys():
     except:
         userio.message(f"Warning: Headroom data not available for {serial}.")
         wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
-        wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
+    try:
+        wholeNumbers[serial].update(Capacity.aggrNode[serial])
+    except:
+        userio.message(f"Warning: Capacity data not available for {serial}.")
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
