@@ -9,6 +9,7 @@ import doREST
 from refreshToken import refreshToken
 from getEfficiency import getEfficiency
 from getCapacity import getCapacity
+from getClusterviewCapacity import getClusterviewCapacity
 from getInformation import getInformation
 from getHeadroom import getHeadroom
 from getClientID import getClientID
@@ -47,7 +48,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.8'
+aiqget='1.9'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -211,11 +212,28 @@ if(len(serialnumbers) == 0):
     exit(0)
 
 # recuperation des valeurs d'efficiency
+# recherche le clientID et les serialnumbers associés à un cutomer_name
+# pour l'instant serialnumbers ONTAP seulement...voir pour rajouter E-series et StorageGRID
+if customer_name is not None:
+    userio.message("Retrieve ClientID and associated ONTAP serialnumbers for customer [" + customer_name + "]...")
+    ClientID=getClientID("api.activeiq.netapp.com",access_token=tokens.access_Token,customer_name=customer_name,debug=debug)
+    if not ClientID.go():
+        ClientID.showDebug()
+        exit(1)
+    serialnumbers=ClientID.listSerialNumbers
+
+# si aucun serialnulber trouvé, on sort
+if(len(serialnumbers) == 0):
+    userio.message("No serialnumbers provided, exiting...")
+    exit(0)
+
+# recuperation des valeurs d'efficiency
 userio.message("Retrieve Efficiency information...")
 Efficiency=getEfficiency("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)
 if not Efficiency.go():
     Efficiency.showDebug()
 
+# recuperation des valeurs de capacity
 # recuperation des valeurs de capacity
 userio.message("Retrieve Capacity information...")
 Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
@@ -257,12 +275,14 @@ if bandwidth:
 
 # assemblage de toutes les informations par serial number
 userio.message("Aggregate all information...")
-wholeNumbers=Capacity.aggrCapacity.copy()
-for serial in Capacity.aggrCapacity.keys():
+#wholeNumbers=Capacity.aggrCapacity.copy()
+wholeNumbers=ClusterviewCapacity.aggrCapacity.copy()
+for serial in ClusterviewCapacity.aggrCapacity.keys():
     try:
         wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
     except:
         userio.message(f"Warning: Headroom data not available for {serial}.")
+        wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
         wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])

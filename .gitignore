@@ -3,4 +3,5 @@
 *.html
 *.sh
 *.pptx
+cnpget.sh
 NTAPlib/__pycache__/*

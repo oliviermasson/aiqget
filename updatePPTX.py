@@ -10,7 +10,7 @@ import sys
 import argparse
 from datetime import datetime
 
-updatePPTX=1.8
+updatePPTX=1.9
 
 def parse_percentage(text):
     try:
@@ -106,11 +106,11 @@ def update_shapes_in_slide(slide, table_data, replace_inplace=False):
             continue        
         cells = row.find_all(['td', 'th'])
         
-        # Vérifier qu'il y a au moins 11 colonnes
-        if len(cells) >= 11:
+        # Vérifier qu'il y a au moins 12 colonnes
+        if len(cells) >= 12:
             nodename = cells[4].get_text().strip()
             capacity_percentage = cells[2].get_text().strip()
-            headroom_percentage = cells[9].get_text().strip()
+            headroom_percentage = cells[10].get_text().strip()
             float_value_capacity = parse_percentage(capacity_percentage)
             float_value_headroom = parse_percentage(headroom_percentage)
             

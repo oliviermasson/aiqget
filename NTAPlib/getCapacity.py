@@ -48,10 +48,7 @@ class getCapacity:
             for serialIndex in range(len(self.response['results']['systems'])):
                 self.aggrCapacity[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
                                                                                                     'HostName':self.response['results']['systems'][serialIndex]['hostName'],
-                                                                                                    'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
-                                                                                                    'CapacityUsed%':self.response['results']['systems'][serialIndex]['currentSystemCapacityUtilization'],
-                                                                                                    'UsedTB':self.response['results']['systems'][serialIndex]['systemUsedCapacity'],
-                                                                                                    'AvailTB':self.response['results']['systems'][serialIndex]['systemUnusedCapacity']}
+                                                                                                    'ClusterName':self.response['results']['systems'][serialIndex]['clusterName']}
             return(True)
         else:
             self.result=1
