@@ -211,17 +211,6 @@ if(len(serialnumbers) == 0):
     userio.message("No serialnumbers provided, exiting...")
     exit(0)
 
-# recuperation des valeurs d'efficiency
-# recherche le clientID et les serialnumbers associés à un cutomer_name
-# pour l'instant serialnumbers ONTAP seulement...voir pour rajouter E-series et StorageGRID
-if customer_name is not None:
-    userio.message("Retrieve ClientID and associated ONTAP serialnumbers for customer [" + customer_name + "]...")
-    ClientID=getClientID("api.activeiq.netapp.com",access_token=tokens.access_Token,customer_name=customer_name,debug=debug)
-    if not ClientID.go():
-        ClientID.showDebug()
-        exit(1)
-    serialnumbers=ClientID.listSerialNumbers
-
 # si aucun serialnulber trouvé, on sort
 if(len(serialnumbers) == 0):
     userio.message("No serialnumbers provided, exiting...")

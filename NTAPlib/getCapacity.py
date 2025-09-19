@@ -35,8 +35,7 @@ class getCapacity:
     #* work all serials at once
         serials = ','.join(serialnumberslist)
         api=self.api + serials
-        if self.debug & 1:
-            userio.message("Retrieve Capacity information for S/N " + serials + "...")
+        userio.message("Retrieve Node information for S/N " + serials + "...")
         if self.debug >= 3:
             userio.message("with URL : " + self.url + api)
         rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
@@ -46,9 +45,13 @@ class getCapacity:
             if self.debug & 4:
                 self.showDebug()
             for serialIndex in range(len(self.response['results']['systems'])):
-                self.aggrCapacity[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
-                                                                                                    'HostName':self.response['results']['systems'][serialIndex]['hostName'],
-                                                                                                    'ClusterName':self.response['results']['systems'][serialIndex]['clusterName']}
+                self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
+                                                                                                'HostName':self.response['results']['systems'][serialIndex]['hostName'],
+                                                                                                'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
+                                                                                                'UsedTB':self.response['results']['systems'][serialIndex]['systemUsedCapacity'],
+                                                                                                'AvailTB':self.response['results']['systems'][serialIndex]['systemUnusedCapacity'],
+                                                                                                'Used%':self.response['results']['systems'][serialIndex]['currentSystemCapacityUtilization'],
+                                                                                                'AgeInYears':self.response['results']['systems'][serialIndex]['systemAgeInYears']}
             return(True)
         else:
             self.result=1
@@ -68,7 +71,7 @@ class getCapacity:
         if 'apicaller' in kwargs.keys():
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrCapacity={}
+        self.aggrNode={}
 
         if len(self.serialnumbers) <= 50:
             #* work all serials at once

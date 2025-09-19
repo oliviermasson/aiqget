@@ -101,7 +101,7 @@ class doREST():
         self.reason=response.reason
         self.response=response.text
 
-        if self.debug & 2:
+        if self.debug >= 3:
             self.showDebug()
 
         if not response.ok:
@@ -135,7 +135,7 @@ class doREST():
                 jobuuid=convert2dict['job']['uuid']
             except:
                 self.reason="Unable to retrieve uuid for asynchronous operation"
-                if self.debug & 2:
+                if self.debug >= 3:
                     self.showDebug()
                 return(False)
             
@@ -161,7 +161,7 @@ class doREST():
                 self.result=jobrest.status_code
                 self.reason=jobrest.reason
     
-                if self.debug & 2:
+                if self.debug >= 3:
                     self.showDebug()
                 
                 if not self.result == 202 and not self.response['state'] == 'running':

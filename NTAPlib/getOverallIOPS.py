@@ -48,8 +48,7 @@ class getOverallIOPS:
         self.aggrOverall={}
         for serialnumber in self.serialnumbers:
             api=self.api + serialnumber
-            if self.debug & 1:
-                userio.message("Retrieve Overall IOPS information for S/N " + serialnumber + "...")
+            userio.message("Retrieve Overall IOPS information for S/N " + serialnumber + "...")
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)

@@ -25,7 +25,7 @@ class getClusterviewCapacity:
 
         if 'debug' in kwargs.keys():
             self.debug=kwargs['debug']
-
+            
         return
     
     def showDebug(self):
@@ -35,38 +35,47 @@ class getClusterviewCapacity:
         # work all serials one by one
         for serialnumber in serialnumberslist:
             api=self.api + serialnumber
-            if self.debug & 1:
-                userio.message("Retrieve Clusterview Capacity information for S/N " + serialnumber + "...")
+            userio.message("Retrieve Clusterview Capacity information for S/N " + serialnumber + "...")
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
             if rest.result == 200:
                 self.result=0
                 self.response=rest.response
-                if self.debug & 4:
+                if self.debug >= 3:
                     self.showDebug()
                 if len(self.response['data']) > 1:
-                    if self.debug & 4:
+                    if self.debug >= 1:
                         print("More than one aggregate found for S/N " + serialnumber + ", need to exclude root aggregate and summarize all others aggregates")
                     nodeaggr={}
                     nodeaggr={'usable_capacity_tib':0,'used_capacity_tib':0,'available_capacity_tib':0}
                     for aggr in self.response['data']:
-                        if 'root' not in aggr['local_tier_name'] and float(aggr['usable_capacity_tib']) > 1:
-                            if self.debug & 4:
-                                print("  " + aggr['local_tier_name'] + " is a DATA aggr with current usage of %s%%" % (float(aggr['used_data_percent'])))
-                            nodeaggr['usable_capacity_tib']+=float(aggr['usable_capacity_tib'])
-                            nodeaggr['used_capacity_tib']+=float(aggr['used_capacity_tib'])
-                            nodeaggr['available_capacity_tib']+=float(aggr['available_capacity_tib'])
-                        else:
-                            if self.debug & 4:
-                                print("  " + aggr['local_tier_name'] + " is a ROOT aggr, excluded from capacity calculation")
-                    nodeaggr['used_data_percent']=round((nodeaggr['used_capacity_tib'] / nodeaggr['usable_capacity_tib']) * 100,2)
-                    self.aggrCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
-                                                    'AvailTB':nodeaggr['available_capacity_tib'],
-                                                    'TotalTB':nodeaggr['usable_capacity_tib'],
-                                                    'CapacityUsed%':nodeaggr['used_data_percent']}
+                        try:
+                            if ('root' not in aggr['local_tier_name'].lower() and aggr.get('usable_capacity_tib') and float(aggr['usable_capacity_tib']) > 1):
+                                if self.debug >= 1:
+                                    print("  " + aggr['local_tier_name'] + " is a DATA aggr with current usage of %s%%" % (float(aggr['used_data_percent'])))
+                                nodeaggr['usable_capacity_tib']+=float(aggr['usable_capacity_tib'])
+                                nodeaggr['used_capacity_tib']+=float(aggr['used_capacity_tib'])
+                                nodeaggr['available_capacity_tib']+=float(aggr['available_capacity_tib'])
+                            else:
+                                if self.debug >= 1:
+                                    print("  " + aggr['local_tier_name'] + " excluded from capacity calculation")
+                        except (ValueError, TypeError, KeyError):
+                            if self.debug >= 1:
+                                print(f"  Skipping aggregate {aggr.get('local_tier_name', 'unknown')} - invalid capacity data")
+                            continue
+                    if nodeaggr['usable_capacity_tib'] > 0:
+                        nodeaggr['used_data_percent']=round((nodeaggr['used_capacity_tib'] / nodeaggr['usable_capacity_tib']) * 100,2)
+                    else:
+                        nodeaggr['used_data_percent']=0
+                    # self.aggrCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
+                    #                                 'AvailTB':nodeaggr['available_capacity_tib'],
+                    #                                 'TotalTB':nodeaggr['usable_capacity_tib'],
+                    #                                 'CapacityUsed%':nodeaggr['used_data_percent']}
+                    self.aggrCapacity[serialnumber]={'TotalTB':nodeaggr['usable_capacity_tib']}
                 else:
                     print("No data found for S/N " + serialnumber)
+                    self.aggrCapacity[serialnumber]={'TotalTB':'n/a'}
             else:
                 self.result=1
                 self.reason=rest.reason
