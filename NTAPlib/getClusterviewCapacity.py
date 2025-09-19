@@ -36,6 +36,8 @@ class getClusterviewCapacity:
         for serialnumber in serialnumberslist:
             api=self.api + serialnumber
             userio.message("Retrieve Clusterview Capacity information for S/N " + serialnumber + "...")
+            # if serialnumber == '952133001024':
+            #     userio.message("Debug for S/N " + serialnumber)
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
@@ -44,6 +46,11 @@ class getClusterviewCapacity:
                 self.response=rest.response
                 if self.debug >= 3:
                     self.showDebug()
+                if 'errors' in self.response:
+                    if len(self.response['errors']) > 0:
+                        print("Error for S/N " + serialnumber + ": " + str(self.response['errors']))
+                        self.aggrCapacity[serialnumber]={'TotalTB':'n/a'}
+                        continue
                 if len(self.response['data']) > 1:
                     if self.debug >= 1:
                         print("More than one aggregate found for S/N " + serialnumber + ", need to exclude root aggregate and summarize all others aggregates")
