@@ -61,6 +61,7 @@ validoptions={'serialnumbers':'str',
               'bandwidth': 'bool',
               'previous_file': 'str',
               'overallIOPS': 'bool',
+              'clusterviewmode': 'bool',
               'access_Token': 'str'}
 
 print(f"Running aiqget version {aiqget}\n")
@@ -144,6 +145,11 @@ if myopts.restdebug:
     debug=debug+2
 
 try:
+    clusterviewmode=myopts.clusterviewmode
+except:
+    clusterviewmode=False
+    
+try:
     protoIOPS=myopts.protoIOPS
 except:
     protoIOPS=False
@@ -224,7 +230,7 @@ if not Efficiency.go():
 
 # recuperation des valeurs de capacity
 userio.message("Retrieve Node information...")
-Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
+Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,clusterviewmode=clusterviewmode,debug=debug)        
 if not Capacity.go():
     Capacity.showDebug()
     
@@ -233,7 +239,7 @@ if not Capacity.go():
 # car les mises à jour via AIQ Capacity sont décalées d'au moins 24h
 # alors que la vision clusterview est plus frequement mise à jour
 userio.message("Retrieve Clusterview Capacity information...")
-ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
+ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,clusterviewmode=clusterviewmode,debug=debug)        
 if not ClusterviewCapacity.go():
     ClusterviewCapacity.showDebug()
 

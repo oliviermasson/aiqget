@@ -4,7 +4,7 @@ import userio
 
 class getClusterviewCapacity:
 
-    def __init__(self,url,access_token,serialnumbers,**kwargs):
+    def __init__(self,url,access_token,serialnumbers,clusterviewmode,**kwargs):
         self.result=None
         self.reason=None
         self.stdout=[]
@@ -13,6 +13,7 @@ class getClusterviewCapacity:
         self.access_Token=access_token
         self.serialnumbers=serialnumbers
         self.debug=False
+        self.clusterviewmode=clusterviewmode
 
         self.apibase=self.__class__.__name__
         if 'apicaller' in kwargs.keys():
@@ -75,11 +76,13 @@ class getClusterviewCapacity:
                         nodeaggr['used_data_percent']=round((nodeaggr['used_capacity_tib'] / nodeaggr['usable_capacity_tib']) * 100,2)
                     else:
                         nodeaggr['used_data_percent']=0
-                    # self.aggrCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
-                    #                                 'AvailTB':nodeaggr['available_capacity_tib'],
-                    #                                 'TotalTB':nodeaggr['usable_capacity_tib'],
-                    #                                 'CapacityUsed%':nodeaggr['used_data_percent']}
-                    self.aggrCapacity[serialnumber]={'TotalTB':nodeaggr['usable_capacity_tib']}
+                    if self.clusterviewmode:
+                        self.aggrCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
+                                                    'AvailTB':nodeaggr['available_capacity_tib'],
+                                                    'TotalTB':nodeaggr['usable_capacity_tib'],
+                                                    'Used%':nodeaggr['used_data_percent']}
+                    else:
+                        self.aggrCapacity[serialnumber]={'TotalTB':nodeaggr['usable_capacity_tib']}
                 else:
                     print("No data found for S/N " + serialnumber)
                     self.aggrCapacity[serialnumber]={'TotalTB':'n/a'}

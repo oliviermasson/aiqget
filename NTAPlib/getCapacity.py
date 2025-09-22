@@ -4,7 +4,7 @@ import userio
 
 class getCapacity:
 
-    def __init__(self,url,access_token,serialnumbers,**kwargs):
+    def __init__(self,url,access_token,serialnumbers,clusterviewmode,**kwargs):
         self.result=None
         self.reason=None
         self.stdout=[]
@@ -13,6 +13,7 @@ class getCapacity:
         self.access_Token=access_token
         self.serialnumbers=serialnumbers
         self.debug=False
+        self.clusterviewmode=clusterviewmode
 
         self.apibase=self.__class__.__name__
         if 'apicaller' in kwargs.keys():
@@ -45,7 +46,13 @@ class getCapacity:
             if self.debug & 4:
                 self.showDebug()
             for serialIndex in range(len(self.response['results']['systems'])):
-                self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
+                if self.clusterviewmode:
+                    self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
+                                                                                                'HostName':self.response['results']['systems'][serialIndex]['hostName'],
+                                                                                                'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
+                                                                                                'AgeInYears':self.response['results']['systems'][serialIndex]['systemAgeInYears']}
+                else:
+                    self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
                                                                                                 'HostName':self.response['results']['systems'][serialIndex]['hostName'],
                                                                                                 'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
                                                                                                 'UsedTB':self.response['results']['systems'][serialIndex]['systemUsedCapacity'],
