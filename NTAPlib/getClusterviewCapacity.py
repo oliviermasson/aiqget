@@ -61,10 +61,10 @@ class getClusterviewCapacity:
                         try:
                             if ('root' not in aggr['local_tier_name'].lower() and aggr.get('usable_capacity_tib') and float(aggr['usable_capacity_tib']) > 1):
                                 if self.debug >= 1:
-                                    print("  " + aggr['local_tier_name'] + " is a DATA aggr with current usage of %s%%" % (float(aggr['used_data_percent'])))
-                                nodeaggr['usable_capacity_tib']+=float(aggr['usable_capacity_tib'])
-                                nodeaggr['used_capacity_tib']+=float(aggr['used_capacity_tib'])
-                                nodeaggr['available_capacity_tib']+=float(aggr['available_capacity_tib'])
+                                    print("  " + aggr['local_tier_name'] + " is a DATA aggr with current usage of %s%%" % (round(float(aggr['used_data_percent'])),2))
+                                nodeaggr['usable_capacity_tib']+=round(float(aggr['usable_capacity_tib']),2)
+                                nodeaggr['used_capacity_tib']+=round(float(aggr['used_capacity_tib']),2)
+                                nodeaggr['available_capacity_tib']+=round(float(aggr['available_capacity_tib']),2)
                             else:
                                 if self.debug >= 1:
                                     print("  " + aggr['local_tier_name'] + " excluded from capacity calculation")

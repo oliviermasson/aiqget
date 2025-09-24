@@ -48,7 +48,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.9'
+aiqget='1.10'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -549,15 +549,21 @@ html_content += "</tr>"
 for serial, data in wholeNumbers.items():
     html_content += f"<tr><td>{serial}</td>"
     for key in sorted(all_keys):
-        current_value = data.get(key, "N/A")
-        previous_value = previous_data.get(serial, {}).get(key, None)
+        try:
+            current_value = round(float(data.get(key, "N/A")),2)
+        except (ValueError, TypeError):
+            current_value = data.get(key, "N/A")
+        try:
+            previous_value = round(float(previous_data.get(serial, {}).get(key, None)),2)
+        except (ValueError, TypeError):
+            previous_value = previous_data.get(serial, {}).get(key, None)
 
         # Comparer les colonnes spécifiées
         if key not in ["Serial Number", "clusterName", "hostName", "effRatio", "model", "release", "site_name"] and previous_value is not None:
             try:
                 # Convertir les valeurs en float pour la comparaison
-                current_value_float = float(current_value)
-                previous_value_float = float(previous_value)
+                current_value_float = round(float(current_value),2)
+                previous_value_float = round(float(previous_value),2)
 
                 # Calculer la variation en pourcentage
                 try:

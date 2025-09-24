@@ -10,7 +10,7 @@ import sys
 import argparse
 from datetime import datetime
 
-updatePPTX=1.9
+updatePPTX=1.10
 
 def parse_percentage(text):
     try:
@@ -25,7 +25,7 @@ def parse_percentage(text):
         # En cas d'erreur, retourne None
         return None
     
-def add_new_slide(pres, date):
+def add_new_slide(pres, date, clusterviewmode=False):
     # on recopie la derniere slide présente car c'est toujours la up to date slide
     source_slide = pres.slides[-1]
 
@@ -59,8 +59,11 @@ def add_new_slide(pres, date):
             if shape.text_frame.paragraphs[0].font.size:
                 font_size = shape.text_frame.paragraphs[0].font.size
             else:
-                font_size = Pt(12)   
-            shape.text_frame.text = str(date)
+                font_size = Pt(12)
+            if clusterviewmode:
+                shape.text_frame.text = str(date)+"\nclusterview"
+            else:  
+                shape.text_frame.text = str(date)
             shape.text_frame.paragraphs[0].font.size = font_size
             shape.text_frame.paragraphs[0].font.bold = True
             shape.text_frame.paragraphs[0].font.color.rgb = RGBColor(0, 0, 0)
@@ -158,7 +161,7 @@ def update_shapes_in_slide(slide, table_data, replace_inplace=False):
     
     return updates_count
 
-def update_ppt_from_html(ppt_path, html_path, replace_inplace=False):
+def update_ppt_from_html(ppt_path, html_path, replace_inplace=False, clusterviewmode=False):
     # Charger la présentation PowerPoint
     prs = Presentation(ppt_path)
     
@@ -194,7 +197,7 @@ def update_ppt_from_html(ppt_path, html_path, replace_inplace=False):
     else:
         # Mode par défaut : ajouter une nouvelle slide
         print("Mode par défaut - Ajout d'une nouvelle slide...")
-        new_slide = add_new_slide(prs, file_date)
+        new_slide = add_new_slide(prs, file_date, clusterviewmode=clusterviewmode)
         total_updates = update_shapes_in_slide(new_slide, table, replace_inplace=False)
         print(f"Nouvelle slide créée avec {total_updates} mises à jour")
     
@@ -223,6 +226,12 @@ def main():
         "--replace-inplace",
         action="store_true",
         help="Modifier les slides existantes au lieu de créer une nouvelle slide"
+    )
+    
+    parser.add_argument(
+        "--clusterviewmode",
+        action="store_true",
+        help="Capacity via le mode Clusterview"
     )
     
     parser.add_argument(
@@ -256,7 +265,8 @@ def main():
         update_ppt_from_html(
             args.ppt_file, 
             args.html_file, 
-            args.replace_inplace
+            args.replace_inplace,
+            args.clusterviewmode
         )
     except Exception as e:
         print(f"Erreur lors de la mise à jour: {e}")
