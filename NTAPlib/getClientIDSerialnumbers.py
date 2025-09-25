@@ -48,7 +48,9 @@ class getClientIDSerialnumbers:
         if rest.result == 200:
             self.result=0
             self.response=rest.response
-            self.list=[]
+            self.listOntap=[]
+            self.listEseries=[]
+            self.DetailsEseries={}
             if self.debug & 4:
                 self.showDebug()
             if(len(self.response['results']) == 0):
@@ -57,12 +59,19 @@ class getClientIDSerialnumbers:
             if(len(self.response['results']) > 1):
                 for equipment in self.response['results']:
                     if equipment['platform_type'] in ['ONTAP','ONTAP-SELECT'] and equipment['hostname']:
-                        self.list.append(equipment['serial_number'])
-                        userio.message("Add serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
+                        self.listOntap.append(equipment['serial_number'])
+                        userio.message("Add ONTAP serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
+                    elif equipment['platform_type'].lower() in ['e-series'] and equipment['hostname']:
+                        self.listEseries.append(equipment['serial_number'])
+                        self.DetailsEseries[equipment['serial_number']]={'Model': equipment['model'] if equipment['model'] and equipment['model'].upper().startswith('E') else 'E' + equipment['model'],'Release':equipment['version'],'HostName':equipment['hostname']}
+                        userio.message("Add E-series serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
                     else:
                         userio.message("Find serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] plateforme: [" + equipment['platform_type'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")    
-                if len(self.list) == 0:
+                if len(self.listOntap) == 0:
                     userio.message("No ONTAP serialnumbers found for clientID [" + self.clientID + "]")
+                if len(self.listEseries) == 0:
+                    userio.message("No E-series serialnumbers found for clientID [" + self.clientID + "]")
+                if len(self.listOntap) == 0 and len(self.listEseries) == 0:
                     return(False)
             userio.message("\n")
             return(True)

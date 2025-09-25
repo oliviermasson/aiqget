@@ -74,6 +74,7 @@ class getClientID:
                 listclientID=[]
                 listclientID.append(self.response['results'][0]['id'])
             listSerialnumbers=[]
+            listSerialnumbersEseries=[]
             for clientID in listclientID:
                 #userio.message("\nGet serialnumbers for ClientID: [" + clientID + "]")
                 self.serialnumbers=getClientIDSerialnumbers("api.activeiq.netapp.com",access_token=self.access_Token,clientID=clientID,debug=self.debug)
@@ -81,10 +82,14 @@ class getClientID:
                     self.serialnumbers.showDebug()
                     if self.debug & 1:
                         userio.message("This ClientID: [" + clientID + "] does not contain any ONTAP serialnumbers.")
-                if len(self.serialnumbers.list) > 0:
-                    listSerialnumbers.extend(self.serialnumbers.list)
+                if len(self.serialnumbers.listOntap) > 0:
+                    listSerialnumbers.extend(self.serialnumbers.listOntap)
+                if len(self.serialnumbers.listEseries) > 0:
+                    listSerialnumbersEseries.extend(self.serialnumbers.listEseries)
             self.listSerialNumbers=[]
             self.listSerialNumbers=list(set(listSerialnumbers))  # Remove duplicates
+            self.listSerialNumbersEseries=[]
+            self.listSerialNumbersEseries=list(set(listSerialnumbersEseries))  # Remove duplicates
             return(True)
         else:
             self.result=1

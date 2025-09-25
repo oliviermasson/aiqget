@@ -97,7 +97,6 @@ class getClusterviewCapacity:
         return(True)
             
     def go(self,**kwargs):
-
         headers = {'content-type': "application/json",
            'accept': "application/json"}
         headers['AuthorizationToken']=self.access_Token
