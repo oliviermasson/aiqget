@@ -6,10 +6,12 @@ import getopt
 import json
 import os
 import doREST
+import doGRAPHQL
 from refreshToken import refreshToken
 from getEfficiency import getEfficiency
 from getCapacity import getCapacity
 from getClusterviewCapacity import getClusterviewCapacity
+from getEseriesCapacity import getEseriesCapacity
 from getInformation import getInformation
 from getHeadroom import getHeadroom
 from getClientID import getClientID
@@ -211,17 +213,26 @@ if customer_name is not None:
         ClientID.showDebug()
         exit(1)
     serialnumbers=ClientID.listSerialNumbers
+    serialnumbersEseries=ClientID.listSerialNumbersEseries
 
-# si aucun serialnulber trouvé, on sort
+# si aucun serialnumber trouvé, on sort
 if(len(serialnumbers) == 0):
-    userio.message("No serialnumbers provided, exiting...")
-    exit(0)
+    userio.message("No Ontap serialnumbers provided, exiting...")
 
-# si aucun serialnulber trouvé, on sort
-if(len(serialnumbers) == 0):
-    userio.message("No serialnumbers provided, exiting...")
-    exit(0)
+# si aucun serialnumber trouvé, on sort
+if(len(serialnumbersEseries) == 0):
+    userio.message("No E-series serialnumbers provided, exiting...")
 
+if (len(serialnumbers) == 0 and len(serialnumbersEseries) == 0):
+    userio.message("No serialnumbers provided, exiting...")
+    exit(1)
+
+if(len(serialnumbersEseries) > 0):
+    userio.message("Retrieve E-series Capacity...")
+    EseriesCapacity=getEseriesCapacity("gql.aiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbersEseries,debug=debug)
+    if not EseriesCapacity.go():
+        EseriesCapacity.showDebug()
+        
 # recuperation des valeurs d'efficiency
 userio.message("Retrieve Efficiency information...")
 Efficiency=getEfficiency("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)
@@ -286,20 +297,24 @@ for serial in ClusterviewCapacity.aggrCapacity.keys():
     except:
         userio.message(f"Warning: Headroom data not available for {serial}.")
         wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
+        
     try:
         wholeNumbers[serial].update(Capacity.aggrNode[serial])
     except:
         userio.message(f"Warning: Capacity data not available for {serial}.")
+    
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
         userio.message(f"Warning: Efficiency data not available for {serial}.")
         wholeNumbers[serial].update({'effRatio': 'unknow'})
+        
     try:
         wholeNumbers[serial].update(Information.aggrInformation[serial])
     except:
         userio.message(f"Warning: Information data not available for {serial}.")
         wholeNumbers[serial].update({'Site_Name': 'unknow', 'Model': 'unknow'})
+        
     if protoIOPS:
         try:
             wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
@@ -315,6 +330,15 @@ for serial in ClusterviewCapacity.aggrCapacity.keys():
             wholeNumbers[serial].update(avgBandwidth.aggrBandwidth[serial])
         except:
             userio.message(f"Warning: Bandwidth data not available for {serial}.")   
+
+if len(serialnumbersEseries) > 0:
+    wholeNumbers.update(EseriesCapacity.aggrECapacity)
+    for serial in EseriesCapacity.aggrECapacity.keys():
+        try:
+            wholeNumbers[serial].update(ClientID.serialnumbers.DetailsEseries[serial])
+        except:
+            userio.message(f"Warning: E-series Details data not available for {serial}.")
+            wholeNumbers[serial].update({'Model': 'unknow', 'Release': 'unknow', 'HostName': 'unknow'})
 
 # Create HTML output
 current_datetime = datetime.now().strftime('%d-%m-%Y %H:%M')
