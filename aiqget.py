@@ -12,6 +12,8 @@ from getEfficiency import getEfficiency
 from getCapacity import getCapacity
 from getClusterviewCapacity import getClusterviewCapacity
 from getEseriesCapacity import getEseriesCapacity
+from getEseriesInformation import getEseriesInformation
+from getStorageGridInformation import getStorageGridInformation
 from getInformation import getInformation
 from getHeadroom import getHeadroom
 from getClientID import getClientID
@@ -214,16 +216,18 @@ if customer_name is not None:
         exit(1)
     serialnumbers=ClientID.listSerialNumbers
     serialnumbersEseries=ClientID.listSerialNumbersEseries
+    serialnumbersStorageGrid=ClientID.listSerialNumbersStorageGrid
 
-# si aucun serialnumber trouvé, on sort
 if(len(serialnumbers) == 0):
     userio.message("No Ontap serialnumbers provided, exiting...")
 
-# si aucun serialnumber trouvé, on sort
 if(len(serialnumbersEseries) == 0):
     userio.message("No E-series serialnumbers provided, exiting...")
+    
+if(len(serialnumbersStorageGrid) == 0):
+    userio.message("No StorageGRID serialnumbers provided, exiting...")
 
-if (len(serialnumbers) == 0 and len(serialnumbersEseries) == 0):
+if (len(serialnumbers) == 0 and len(serialnumbersEseries) == 0 and len(serialnumbersStorageGrid) == 0):
     userio.message("No serialnumbers provided, exiting...")
     exit(1)
 
@@ -233,56 +237,69 @@ if(len(serialnumbersEseries) > 0):
     if not EseriesCapacity.go():
         EseriesCapacity.showDebug()
         
+    userio.message("Retrieve E-series Information... ")
+    EseriesInformation=getEseriesInformation("gql.aiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbersEseries,debug=debug)
+    if not EseriesInformation.go():
+        EseriesInformation.showDebug()
+
+if(len(serialnumbersStorageGrid) > 0):
+    userio.message("Retrieve StorageGRID Information...")
+    StorageGridInformation=getStorageGridInformation("gql.aiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbersStorageGrid,detailSG=ClientID.serialnumbers.DetailsStorageGrid,debug=debug)
+    if not StorageGridInformation.go():
+        StorageGridInformation.showDebug()
+
+      
 # recuperation des valeurs d'efficiency
-userio.message("Retrieve Efficiency information...")
+userio.message("Retrieve ONTAP Efficiency information...")
 Efficiency=getEfficiency("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)
 if not Efficiency.go():
     Efficiency.showDebug()
 
 # recuperation des valeurs de capacity
-userio.message("Retrieve Node information...")
+userio.message("Retrieve ONTAP Node information...")
 Capacity=getCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,clusterviewmode=clusterviewmode,debug=debug)        
 if not Capacity.go():
     Capacity.showDebug()
     
 
 # recuperation des capacity aggr via Cluster view API
-# car les mises à jour via AIQ Capacity sont décalées d'au moins 24h
-# alors que la vision clusterview est plus frequement mise à jour
-userio.message("Retrieve Clusterview Capacity information...")
+# les valeurs sont plus fiables et correspondent exactement à ce qui est visible dans AGGR_INFO.XML
+# que ce soit les chiffres de clusterview ou de capacity ils s'appuient tous les 2 sur le weekly asup
+# donc a moins que le client ne genere un nouvel asup complet, les informations de capacité ne seront calculées qu'une fois par semaine
+userio.message("Retrieve ONTAP Clusterview Capacity information...")
 ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,clusterviewmode=clusterviewmode,debug=debug)        
 if not ClusterviewCapacity.go():
     ClusterviewCapacity.showDebug()
 
 # recuperation des valeurs du headroom CPU
-userio.message("Retrieve Headroom information...")
+userio.message("Retrieve ONTAP Headroom information...")
 Headroom=getHeadroom("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
 if not Headroom.go():
     Headroom.showDebug()
 
 # recuperation des informations sur les nodes
-userio.message("Retrieve Node Information...")
+userio.message("Retrieve ONTAP Node Information...")
 Information=getInformation("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
 if not Information.go():
     Information.showDebug()
 
 # recuperation des valeurs de IOPS par protocol
 if protoIOPS:
-    userio.message("Retrieve Protocols IOPS information...")
+    userio.message("Retrieve ONTAP Protocols IOPS information...")
     ProtocolsIOPS=getProtocolsIOPS("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not ProtocolsIOPS.go():
         ProtocolsIOPS.showDebug()
 
 # recuperation des valeurs de IOPS globales
 if overallIOPS:
-    userio.message("Retrieve avg IOPS information...")
+    userio.message("Retrieve ONTAP avg IOPS information...")
     avgIOPS=getOverallIOPS("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not avgIOPS.go():
         avgIOPS.showDebug()
 
 # recuperation des valeurs de bande passante
 if bandwidth:
-    userio.message("Retrieve Bandwidth information...")
+    userio.message("Retrieve ONTAP Bandwidth information...")
     avgBandwidth=getBandwidth("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,start=before,end=today,debug=debug)        
     if not avgBandwidth.go():
         avgBandwidth.showDebug()
@@ -295,41 +312,41 @@ for serial in ClusterviewCapacity.aggrCapacity.keys():
     try:
         wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
     except:
-        userio.message(f"Warning: Headroom data not available for {serial}.")
+        userio.message(f"Warning: ONTAP Headroom data not available for {serial}.")
         wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
         
     try:
         wholeNumbers[serial].update(Capacity.aggrNode[serial])
     except:
-        userio.message(f"Warning: Capacity data not available for {serial}.")
+        userio.message(f"Warning: ONTAP Capacity data not available for {serial}.")
     
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])
     except:
-        userio.message(f"Warning: Efficiency data not available for {serial}.")
+        userio.message(f"Warning: ONTAP Efficiency data not available for {serial}.")
         wholeNumbers[serial].update({'effRatio': 'unknow'})
         
     try:
         wholeNumbers[serial].update(Information.aggrInformation[serial])
     except:
-        userio.message(f"Warning: Information data not available for {serial}.")
+        userio.message(f"Warning: ONTAP Information data not available for {serial}.")
         wholeNumbers[serial].update({'Site_Name': 'unknow', 'Model': 'unknow'})
         
     if protoIOPS:
         try:
             wholeNumbers[serial].update(ProtocolsIOPS.aggrProtoIOPS[serial])
         except:
-            userio.message(f"Warning: Protocols IOPS data not available for {serial}.")
+            userio.message(f"Warning: ONTAP Protocols IOPS data not available for {serial}.")
     if overallIOPS:
         try:
             wholeNumbers[serial].update(avgIOPS.aggrOverall[serial])
         except:
-            userio.message(f"Warning: Overall IOPS data not available for {serial}.")
+            userio.message(f"Warning: ONTAP Overall IOPS data not available for {serial}.")
     if bandwidth:
         try:
             wholeNumbers[serial].update(avgBandwidth.aggrBandwidth[serial])
         except:
-            userio.message(f"Warning: Bandwidth data not available for {serial}.")   
+            userio.message(f"Warning: ONTAP Bandwidth data not available for {serial}.")
 
 if len(serialnumbersEseries) > 0:
     wholeNumbers.update(EseriesCapacity.aggrECapacity)
@@ -339,6 +356,14 @@ if len(serialnumbersEseries) > 0:
         except:
             userio.message(f"Warning: E-series Details data not available for {serial}.")
             wholeNumbers[serial].update({'Model': 'unknow', 'Release': 'unknow', 'HostName': 'unknow'})
+        try:
+            wholeNumbers[serial].update(EseriesInformation.aggrEInformation[serial])
+        except:
+            userio.message(f"Warning: E-series Information data not available for {serial}.")
+            wholeNumbers[serial].update({'Site_Name': 'unknow', 'AgeInYears': 'unknow'})
+
+if len(serialnumbersStorageGrid) > 0:
+    wholeNumbers.update(StorageGridInformation.aggrSGInformation)
 
 # Create HTML output
 current_datetime = datetime.now().strftime('%d-%m-%Y %H:%M')

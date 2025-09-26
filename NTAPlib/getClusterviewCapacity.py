@@ -36,7 +36,7 @@ class getClusterviewCapacity:
         # work all serials one by one
         for serialnumber in serialnumberslist:
             api=self.api + serialnumber
-            userio.message("Retrieve Clusterview Capacity information for S/N " + serialnumber + "...")
+            userio.message("Retrieve ONTAP Clusterview Capacity information for S/N " + serialnumber + "...")
             # if serialnumber == '952133001024':
             #     userio.message("Debug for S/N " + serialnumber)
             if self.debug >= 3:

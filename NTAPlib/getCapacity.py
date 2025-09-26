@@ -36,7 +36,7 @@ class getCapacity:
     #* work all serials at once
         serials = ','.join(serialnumberslist)
         api=self.api + serials
-        userio.message("Retrieve Node information for S/N " + serials + "...")
+        userio.message("Retrieve ONTAP Node information for S/N " + serials + "...")
         if self.debug >= 3:
             userio.message("with URL : " + self.url + api)
         rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)

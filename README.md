@@ -1,8 +1,8 @@
 # AIQget
 
-AIQget is a Python CLI which retreive information from ActiveIQ.NetApp.com for ONTAP serialnumber
+AIQget is a Python CLI which retrieve information from ActiveIQ.NetApp.com for ONTAP serialnumber
 
-AIQget is a python script which retreive the following information from AIQ:
+AIQget is a python script which retrieve the following information from AIQ:
 
     average current CPU Headroom for the last 31 days (default)
     efficiency ratio

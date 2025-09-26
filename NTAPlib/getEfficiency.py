@@ -46,7 +46,7 @@ class getEfficiency:
         self.aggrEfficiency={}
         for serialnumber in self.serialnumbers:
             api=self.api + serialnumber
-            userio.message("Retrieve Efficiency information for S/N " + serialnumber + "...")
+            userio.message("Retrieve ONTAP Efficiency information for S/N " + serialnumber + "...")
             if self.debug >= 3:
                 userio.message("with URL : " + self.url + api)
             rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)

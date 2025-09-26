@@ -41,7 +41,7 @@ class getClientIDSerialnumbers:
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
         api=self.api
-        userio.message("Retrieve ONTAP serialnumbers for clientID [" + self.clientID + "]...")
+        userio.message("Retrieve serialnumbers for clientID [" + self.clientID + "]...")
         if self.debug >= 3:
             userio.message("with URL : " + self.url + api)
         rest=doREST.doREST(self.url,'get',api,debug=self.debug,headers=headers)
@@ -51,6 +51,8 @@ class getClientIDSerialnumbers:
             self.listOntap=[]
             self.listEseries=[]
             self.DetailsEseries={}
+            self.listStorageGrid=[]
+            self.DetailsStorageGrid={}
             if self.debug & 4:
                 self.showDebug()
             if(len(self.response['results']) == 0):
@@ -63,8 +65,12 @@ class getClientIDSerialnumbers:
                         userio.message("Add ONTAP serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
                     elif equipment['platform_type'].lower() in ['e-series'] and equipment['hostname']:
                         self.listEseries.append(equipment['serial_number'])
-                        self.DetailsEseries[equipment['serial_number']]={'Model': equipment['model'] if equipment['model'] and equipment['model'].upper().startswith('E') else 'E' + equipment['model'],'Release':equipment['version'],'HostName':equipment['hostname']}
+                        self.DetailsEseries[equipment['serial_number']]={'Model': equipment['model'] if equipment['model'] and (equipment['model'].upper().startswith('E') or equipment['model'].upper().startswith('S')) else 'E' + equipment['model'],'Release':equipment['version'],'HostName':equipment['hostname']}
                         userio.message("Add E-series serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
+                    elif equipment['platform_type'].lower() in ['storagegrid'] and equipment['hostname']:
+                        self.listStorageGrid.append(equipment['serial_number'])
+                        self.DetailsStorageGrid[equipment['serial_number']]={'Model': equipment['model'],'Release':equipment['version'],'HostName':equipment['hostname'],'SystemID': equipment['system_id']}
+                        userio.message("Add StorageGRID serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")
                     else:
                         userio.message("Find serialnumber: [" + equipment['serial_number'] + "] with name: [" + equipment['hostname'] + "] plateforme: [" + equipment['platform_type'] + "] model: [" + equipment['model'] + "] version: [" + equipment['version'] + "]")    
                 if len(self.listOntap) == 0:
