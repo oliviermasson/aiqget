@@ -10,7 +10,7 @@ import sys
 import argparse
 from datetime import datetime
 
-updatePPTX=1.10
+updatePPTX=1.11
 
 def parse_percentage(text):
     try:

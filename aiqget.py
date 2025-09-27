@@ -52,7 +52,7 @@ def parse_existing_table(file_path):
 
     return data
 
-aiqget='1.10'
+aiqget='1.11'
 
 validoptions={'serialnumbers':'str',
               'refresh_Token':'str',
@@ -266,10 +266,11 @@ if not Capacity.go():
 # les valeurs sont plus fiables et correspondent exactement à ce qui est visible dans AGGR_INFO.XML
 # que ce soit les chiffres de clusterview ou de capacity ils s'appuient tous les 2 sur le weekly asup
 # donc a moins que le client ne genere un nouvel asup complet, les informations de capacité ne seront calculées qu'une fois par semaine
-userio.message("Retrieve ONTAP Clusterview Capacity information...")
-ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,clusterviewmode=clusterviewmode,debug=debug)        
-if not ClusterviewCapacity.go():
-    ClusterviewCapacity.showDebug()
+if clusterviewmode:
+    userio.message("Retrieve ONTAP Clusterview Capacity information...")
+    ClusterviewCapacity=getClusterviewCapacity("api.activeiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbers,debug=debug)        
+    if not ClusterviewCapacity.go():
+        ClusterviewCapacity.showDebug()
 
 # recuperation des valeurs du headroom CPU
 userio.message("Retrieve ONTAP Headroom information...")
@@ -306,19 +307,25 @@ if bandwidth:
 
 # assemblage de toutes les informations par serial number
 userio.message("Aggregate all information...")
-#wholeNumbers=Capacity.aggrCapacity.copy()
-wholeNumbers=ClusterviewCapacity.aggrCapacity.copy()
-for serial in ClusterviewCapacity.aggrCapacity.keys():
+if clusterviewmode:
+    wholeNumbers=ClusterviewCapacity.aggrClusterviewCapacity.copy()
+    seriallist=list(ClusterviewCapacity.aggrClusterviewCapacity.keys())
+else:
+    wholeNumbers=Capacity.aggrCapacityNode.copy()
+    seriallist=list(Capacity.aggrCapacityNode.keys())
+
+for serial in seriallist:
     try:
         wholeNumbers[serial].update(Headroom.aggrHeadroom[serial])
     except:
         userio.message(f"Warning: ONTAP Headroom data not available for {serial}.")
         wholeNumbers[serial].update({'avgCPUheadroom%': 'unknow'})
         
-    try:
-        wholeNumbers[serial].update(Capacity.aggrNode[serial])
-    except:
-        userio.message(f"Warning: ONTAP Capacity data not available for {serial}.")
+    if clusterviewmode:
+        try:
+            wholeNumbers[serial].update(Capacity.aggrCapacityNode[serial])
+        except:
+            userio.message(f"Warning: ONTAP Capacity data not available for {serial}.")
     
     try:
         wholeNumbers[serial].update(Efficiency.aggrEfficiency[serial])

@@ -4,7 +4,7 @@ import userio
 
 class getClusterviewCapacity:
 
-    def __init__(self,url,access_token,serialnumbers,clusterviewmode,**kwargs):
+    def __init__(self,url,access_token,serialnumbers,**kwargs):
         self.result=None
         self.reason=None
         self.stdout=[]
@@ -13,7 +13,6 @@ class getClusterviewCapacity:
         self.access_Token=access_token
         self.serialnumbers=serialnumbers
         self.debug=False
-        self.clusterviewmode=clusterviewmode
 
         self.apibase=self.__class__.__name__
         if 'apicaller' in kwargs.keys():
@@ -76,16 +75,13 @@ class getClusterviewCapacity:
                         nodeaggr['used_data_percent']=round((nodeaggr['used_capacity_tib'] / nodeaggr['usable_capacity_tib']) * 100,2)
                     else:
                         nodeaggr['used_data_percent']=0
-                    if self.clusterviewmode:
-                        self.aggrCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
+                    self.aggrClusterviewCapacity[serialnumber]={'UsedTB':nodeaggr['used_capacity_tib'],
                                                     'AvailTB':nodeaggr['available_capacity_tib'],
                                                     'TotalTB':nodeaggr['usable_capacity_tib'],
                                                     'Used%':nodeaggr['used_data_percent']}
-                    else:
-                        self.aggrCapacity[serialnumber]={'TotalTB':nodeaggr['usable_capacity_tib']}
                 else:
                     print("No data found for S/N " + serialnumber)
-                    self.aggrCapacity[serialnumber]={'TotalTB':'n/a'}
+                    self.aggrClusterviewCapacity[serialnumber]={'TotalTB':'n/a'}
             else:
                 self.result=1
                 self.reason=rest.reason
@@ -104,6 +100,6 @@ class getClusterviewCapacity:
         if 'apicaller' in kwargs.keys():
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrCapacity={}
+        self.aggrClusterviewCapacity={}
 
         return self.proceedSerialList(self.serialnumbers,headers)

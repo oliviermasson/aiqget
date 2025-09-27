@@ -47,16 +47,17 @@ class getCapacity:
                 self.showDebug()
             for serialIndex in range(len(self.response['results']['systems'])):
                 if self.clusterviewmode:
-                    self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
+                    self.aggrCapacityNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
                                                                                                 'HostName':self.response['results']['systems'][serialIndex]['hostName'],
                                                                                                 'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
                                                                                                 'AgeInYears':self.response['results']['systems'][serialIndex]['systemAgeInYears']}
                 else:
-                    self.aggrNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
+                    self.aggrCapacityNode[self.response['results']['systems'][serialIndex]['serialNumber']]={'Release':self.response['results']['systems'][serialIndex]['osVersion'],
                                                                                                 'HostName':self.response['results']['systems'][serialIndex]['hostName'],
                                                                                                 'ClusterName':self.response['results']['systems'][serialIndex]['clusterName'],
                                                                                                 'UsedTB':self.response['results']['systems'][serialIndex]['systemUsedCapacity'],
                                                                                                 'AvailTB':self.response['results']['systems'][serialIndex]['systemUnusedCapacity'],
+                                                                                                'TotalTB':self.response['results']['systems'][serialIndex]['systemUsedCapacity']+self.response['results']['systems'][serialIndex]['systemUnusedCapacity'],
                                                                                                 'Used%':self.response['results']['systems'][serialIndex]['currentSystemCapacityUtilization'],
                                                                                                 'AgeInYears':self.response['results']['systems'][serialIndex]['systemAgeInYears']}
             return(True)
@@ -78,7 +79,7 @@ class getCapacity:
         if 'apicaller' in kwargs.keys():
             self.apicaller=kwargs['apicaller']
         localapi='->'.join([self.apicaller,self.apibase + ".go"])
-        self.aggrNode={}
+        self.aggrCapacityNode={}
 
         if len(self.serialnumbers) <= 50:
             #* work all serials at once
