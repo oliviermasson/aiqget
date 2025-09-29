@@ -49,7 +49,7 @@ class getClusterviewCapacity:
                 if 'errors' in self.response:
                     if len(self.response['errors']) > 0:
                         print("Error for S/N " + serialnumber + ": " + str(self.response['errors']))
-                        self.aggrCapacity[serialnumber]={'TotalTB':'n/a'}
+                        self.aggrClusterviewCapacity[serialnumber]={'TotalTB':'n/a'}
                         continue
                 if len(self.response['data']) > 1:
                     if self.debug >= 1:
