@@ -219,7 +219,6 @@ if customer_name is not None:
     serialnumbersStorageGrid=ClientID.listSerialNumbersStorageGrid
 else:
     serialnumbersEseries=[]
-    serialnumbersStorageGrid=[] 
     serialnumbersStorageGrid=[]
 
 if(len(serialnumbers) == 0):
@@ -248,7 +247,7 @@ if(len(serialnumbersEseries) > 0):
 
 if(len(serialnumbersStorageGrid) > 0):
     userio.message("Retrieve StorageGRID Information...")
-    StorageGridInformation=getStorageGridInformation("gql.aiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbersStorageGrid,detailSG=ClientID.serialnumbers.DetailsStorageGrid,debug=debug)
+    StorageGridInformation=getStorageGridInformation("gql.aiq.netapp.com",access_token=tokens.access_Token,serialnumbers=serialnumbersStorageGrid,detailSG=ClientID.DetailsStorageGrid,debug=debug)
     if not StorageGridInformation.go():
         StorageGridInformation.showDebug()
 
