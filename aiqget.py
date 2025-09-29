@@ -451,71 +451,292 @@ html_content = f"""
         .reset-filter:hover {{
             background-color: #0055aa;
         }}
+        /* Styles pour le filtre dropdown */
+        .dropdown-filter {{
+            position: relative;
+            display: inline-block;
+        }}
+
+        .dropdown-content {{
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }}
+
+        .dropdown-content label {{
+            display: block;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: black;
+            font-weight: normal;
+        }}
+
+        .dropdown-content label:hover {{
+            background-color: #f1f1f1;
+        }}
+
+        .dropdown-content input[type="checkbox"] {{
+            margin-right: 8px;
+        }}
+
+        .filter-actions {{
+            padding: 8px 12px;
+            border-top: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }}
+
+        .filter-btn {{
+            padding: 4px 8px;
+            margin: 2px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }}
+
+        .filter-btn:hover {{
+            background-color: #0055aa;
+        }}
+
+        .show {{
+            display: block;
+        }}
     </style>
     <script>
-        function extractNumber(cellContent) {{
-            let match = cellContent.replace(',', '.').match(/-?\d+(\.\d+)?/);
-            return match ? parseFloat(match[0]) : NaN;
-        }}
+        let modelFilterActive = false;
+        let hostNameFilterActive = false;
+        let activeHostNameFilter = "";
 
-        function resetFilter() {{
-            const table = document.querySelector("table");
-            const rows = table.getElementsByTagName("tr");
-            const headers = rows[0].getElementsByTagName("th");
+        function showModelFilter(event) {{{{
+            event.stopPropagation();
+            const dropdown = document.getElementById("modelDropdownContent");
             
-            // Réinitialiser l'affichage de toutes les lignes
-            for (let i = 1; i < rows.length; i++) {{
-                rows[i].style.display = "";
-            }}
-            
-            // Supprimer l'indicateur de filtre
-            for (let i = 0; i < headers.length; i++) {{
-                headers[i].classList.remove("filtered");
-            }}
-        }}
+            if (!dropdown.classList.contains("show")) {{{{
+                populateModelFilter();
+                dropdown.classList.add("show");
+            }}}} else {{{{
+                dropdown.classList.remove("show");
+            }}}}
+        }}}}
 
-        function filterByHostName() {{
-            const searchValue = prompt("Filter by HostName (leave empty to reset filter):");
-            if (searchValue === null) return; // L'utilisateur a annulé
-            
+        function populateModelFilter() {{{{
             const table = document.querySelector("table");
             const rows = table.getElementsByTagName("tr");
             const headerCells = rows[0].getElementsByTagName("th");
             
-            // Trouver l'index de la colonne HostName
-            let hostNameIndex = -1;
-            for (let i = 0; i < headerCells.length; i++) {{
-                if (headerCells[i].textContent.trim() === "HostName") {{
-                    hostNameIndex = i;
+            // Trouver l'index de la colonne Model
+            let modelIndex = -1;
+            for (let i = 0; i < headerCells.length; i++) {{{{
+                if (headerCells[i].textContent.trim().includes("Model")) {{{{
+                    modelIndex = i;
                     break;
-                }}
-            }}
-            
-            if (hostNameIndex === -1) return; // Colonne HostName non trouvée
-            
-            // Parcourir toutes les lignes et cacher celles qui ne correspondent pas
-            for (let i = 1; i < rows.length; i++) {{
-                const row = rows[i];
-                const hostNameCell = row.getElementsByTagName("td")[hostNameIndex];
-                
-                if (searchValue === "" || hostNameCell.textContent.toLowerCase().includes(searchValue.toLowerCase())) {{
-                    row.style.display = "";
-                }} else {{
-                    row.style.display = "none";
-                }}
-            }}
-            
-            // Ajouter un indicateur de filtre actif à l'en-tête
-            for (let i = 0; i < headerCells.length; i++) {{
-                headerCells[i].classList.remove("filtered");
-            }}
-            
-            if (searchValue !== "") {{
-                headerCells[hostNameIndex].classList.add("filtered");
-            }}
-        }}
+                }}}}
+            }}}}
 
-        function sortTable(n) {{
+            if (modelIndex === -1) return;
+            
+            // Collecter tous les modèles uniques
+            const models = new Set();
+            for (let i = 1; i < rows.length; i++) {{{{
+                const modelCell = rows[i].getElementsByTagName("td")[modelIndex];
+                if (modelCell) {{{{
+                    let modelText = modelCell.textContent.trim();
+                    // Nettoyer le texte (supprimer les variations si nécessaire)
+                    modelText = modelText.replace(/\\[.*?\\]/g, '').trim();
+                    if (modelText && modelText !== 'N/A' && modelText !== 'unknow') {{{{
+                        models.add(modelText);
+                    }}}}
+                }}}}
+            }}}}
+
+            // Créer les options du dropdown
+            const dropdown = document.getElementById("modelDropdownContent");
+            dropdown.innerHTML = '';
+            
+            // Ajouter les checkboxes pour chaque modèle
+            const sortedModels = Array.from(models).sort();
+            sortedModels.forEach(model => {{{{
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" value="${{model}}" onchange="applyAllFilters()">
+                    ${{model}}
+                `;
+                dropdown.appendChild(label);
+            }}}});
+            
+            // Ajouter les boutons d'action
+            const actions = document.createElement('div');
+            actions.className = 'filter-actions';
+            actions.innerHTML = `
+                <button class="filter-btn" onclick="selectAllModels()">Select All</button>
+                <button class="filter-btn" onclick="clearAllModels()">Clear All</button>
+            `;
+            dropdown.appendChild(actions);
+        }}}}
+
+        function selectAllModels() {{{{
+            const checkboxes = document.querySelectorAll('#modelDropdownContent input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {{{{
+                checkbox.checked = true;
+            }}}});
+            applyAllFilters();
+        }}}}
+
+        function clearAllModels() {{{{
+            const checkboxes = document.querySelectorAll('#modelDropdownContent input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {{{{
+                checkbox.checked = false;
+            }}}});
+            applyAllFilters();
+        }}}}
+
+        function closeModelFilter() {{{{
+            document.getElementById("modelDropdownContent").classList.remove("show");
+        }}}}
+
+        // Fonction centralisée qui applique tous les filtres
+        function applyAllFilters() {{{{
+            const table = document.querySelector("table");
+            const rows = table.getElementsByTagName("tr");
+            const headerCells = rows[0].getElementsByTagName("th");
+            
+            // Trouver les index des colonnes
+            let modelIndex = -1;
+            let hostNameIndex = -1;
+            
+            for (let i = 0; i < headerCells.length; i++) {{{{
+                if (headerCells[i].textContent.trim().includes("Model")) {{{{
+                    modelIndex = i;
+                }}}}
+                if (headerCells[i].textContent.trim() === "HostName") {{{{
+                    hostNameIndex = i;
+                }}}}
+            }}}}
+            
+            // Obtenir les modèles sélectionnés
+            const modelCheckboxes = document.querySelectorAll('#modelDropdownContent input[type="checkbox"]:checked');
+            const selectedModels = Array.from(modelCheckboxes).map(cb => cb.value);
+            
+            // Appliquer tous les filtres combinés
+            for (let i = 1; i < rows.length; i++) {{{{
+                const row = rows[i];
+                let showRow = true;
+                
+                // Filtre par modèle
+                if (modelIndex !== -1 && selectedModels.length > 0) {{{{
+                    const modelCell = row.getElementsByTagName("td")[modelIndex];
+                    if (modelCell) {{{{
+                        let modelText = modelCell.textContent.trim().replace(/\\[.*?\\]/g, '').trim();
+                        if (!selectedModels.includes(modelText)) {{{{
+                            showRow = false;
+                        }}}}
+                    }}}}
+                }}}}
+                
+                // Filtre par hostname
+                if (hostNameIndex !== -1 && activeHostNameFilter !== "") {{{{
+                    const hostNameCell = row.getElementsByTagName("td")[hostNameIndex];
+                    if (hostNameCell) {{{{
+                        if (!hostNameCell.textContent.toLowerCase().includes(activeHostNameFilter.toLowerCase())) {{{{
+                            showRow = false;
+                        }}}}
+                    }}}}
+                }}}}
+                
+                // Appliquer la visibilité
+                row.style.display = showRow ? "" : "none";
+            }}}}
+            
+            // Mettre à jour les indicateurs visuels
+            updateFilterIndicators(selectedModels, modelIndex, hostNameIndex, headerCells);
+        }}}}
+
+        function updateFilterIndicators(selectedModels, modelIndex, hostNameIndex, headerCells) {{{{
+            // Reset all filter indicators
+            for (let i = 0; i < headerCells.length; i++) {{{{
+                headerCells[i].classList.remove("filtered");
+            }}}}
+            
+            // Model filter indicator
+            if (modelIndex !== -1 && selectedModels.length > 0) {{{{
+                const totalModels = document.querySelectorAll('#modelDropdownContent input[type="checkbox"]').length;
+                if (selectedModels.length < totalModels) {{{{
+                    headerCells[modelIndex].classList.add("filtered");
+                    modelFilterActive = true;
+                }}}} else {{{{
+                    modelFilterActive = false;
+                }}}}
+            }}}} else {{{{
+                modelFilterActive = false;
+            }}}}
+            
+            // HostName filter indicator
+            if (hostNameIndex !== -1 && activeHostNameFilter !== "") {{{{
+                headerCells[hostNameIndex].classList.add("filtered");
+                hostNameFilterActive = true;
+            }}}} else {{{{
+                hostNameFilterActive = false;
+            }}}}
+        }}}}
+
+        function filterByHostName() {{{{
+            const searchValue = prompt("Filter by HostName (leave empty to reset filter):");
+            if (searchValue === null) return; // L'utilisateur a annulé
+            
+            activeHostNameFilter = searchValue || "";
+            applyAllFilters();
+        }}}}
+
+        function resetAllFilters() {{{{
+            // Reset model filter
+            const checkboxes = document.querySelectorAll('#modelDropdownContent input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {{{{
+                checkbox.checked = false;
+            }}}});
+            
+            // Reset hostname filter
+            activeHostNameFilter = "";
+            
+            // Reset filter states
+            modelFilterActive = false;
+            hostNameFilterActive = false;
+            
+            // Apply filters (will show all rows)
+            applyAllFilters();
+            
+            closeModelFilter();
+        }}}}
+
+        // Fermer le dropdown si on clique ailleurs
+        document.addEventListener('click', function(event) {{{{
+            const dropdown = document.getElementById("modelDropdownContent");
+            const isClickInsideDropdown = dropdown && dropdown.contains(event.target);
+            const isClickOnHeader = event.target.closest('th') && event.target.closest('th').textContent.includes('Model');
+
+            if (!isClickInsideDropdown && !isClickOnHeader && dropdown) {{{{
+                dropdown.classList.remove("show");
+            }}}}
+        }}}});
+
+        function extractNumber(cellContent) {{{{
+            let match = cellContent.replace(',', '.').match(/-?\\d+(\\.\\d+)?/);
+            return match ? parseFloat(match[0]) : NaN;
+        }}}}
+
+        function resetFilter() {{{{
+            resetAllFilters();
+        }}}}
+
+        function sortTable(n) {{{{
             var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
             table = document.querySelector("table");
             switching = true;
@@ -523,18 +744,18 @@ html_content = f"""
             
             // Remove sorting indicators from all headers
             var headers = table.getElementsByTagName("th");
-            for (i = 0; i < headers.length; i++) {{
+            for (i = 0; i < headers.length; i++) {{{{
                 headers[i].classList.remove("asc", "desc");
-            }}  
+            }}}}  
             
             // Add sorting indicator to clicked header
             headers[n].classList.add(dir);
             
-            while (switching) {{
+            while (switching) {{{{
                 switching = false;
                 rows = table.rows;
                 
-                for (i = 1; i < (rows.length - 1); i++) {{
+                for (i = 1; i < (rows.length - 1); i++) {{{{
                     shouldSwitch = false;
                     x = rows[i].getElementsByTagName("td")[n];
                     y = rows[i + 1].getElementsByTagName("td")[n];
@@ -545,41 +766,41 @@ html_content = f"""
 
                     let xNum = extractNumber(xContent);
                     let yNum = extractNumber(yContent);
-                    if (!isNaN(xNum) && !isNaN(yNum)) {{
+                    if (!isNaN(xNum) && !isNaN(yNum)) {{{{
                         xContent = xNum;
                         yContent = yNum;
-                    }} else {{
+                    }}}} else {{{{
                         xContent = xContent.toLowerCase();
                         yContent = yContent.toLowerCase();
-                    }}
+                    }}}}
 
-                    if (dir == "asc") {{
-                        if (xContent > yContent) {{
+                    if (dir == "asc") {{{{
+                        if (xContent > yContent) {{{{
                             shouldSwitch = true;
                             break;
-                        }}
-                    }} else if (dir == "desc") {{
-                        if (xContent < yContent) {{
+                        }}}}
+                    }}}} else if (dir == "desc") {{{{
+                        if (xContent < yContent) {{{{
                             shouldSwitch = true;
                             break;
-                        }}
-                    }}
-                }}
+                        }}}}
+                    }}}}
+                }}}}
                 
-                if (shouldSwitch) {{
+                if (shouldSwitch) {{{{
                     rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
                     switching = true;
                     switchcount++;
-                }} else {{
-                    if (switchcount == 0 && dir == "asc") {{
+                }}}} else {{{{
+                    if (switchcount == 0 && dir == "asc") {{{{
                         dir = "desc";
                         headers[n].classList.remove("asc");
                         headers[n].classList.add("desc");
                         switching = true;
-                    }}
-                }}
-            }}
-        }}
+                    }}}}
+                }}}}
+            }}}}
+        }}}}
     </script>
 </head>
 <body>
@@ -589,8 +810,16 @@ html_content = f"""
 
 # Get all possible keys from all dictionaries to create headers
 all_keys = set()
+#print("Colonnes disponibles:", sorted(all_keys))
 for serial_data in wholeNumbers.values():
     all_keys.update(serial_data.keys())
+
+
+html_content += '''
+    <div>
+        <button class="reset-filter" onclick="resetAllFilters()">Reset All Filters</button>
+    </div>
+'''
 
 # Create table headers
 html_content += "<tr>"
@@ -599,6 +828,13 @@ column_index = 1
 for key in sorted(all_keys):
     if key == "HostName":
         html_content += f'<th onclick="filterByHostName()">{key}</th>'
+    elif key == "Model":
+        html_content += f'''<th onclick="showModelFilter(event)">{key}
+            <div id="modelDropdown" class="dropdown-filter">
+                <div id="modelDropdownContent" class="dropdown-content">
+                </div>
+            </div>
+        </th>'''
     else:
         html_content += f'<th onclick="sortTable({column_index})">{key}</th>'
     column_index += 1
