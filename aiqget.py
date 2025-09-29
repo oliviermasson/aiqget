@@ -217,6 +217,10 @@ if customer_name is not None:
     serialnumbers=ClientID.listSerialNumbers
     serialnumbersEseries=ClientID.listSerialNumbersEseries
     serialnumbersStorageGrid=ClientID.listSerialNumbersStorageGrid
+else:
+    serialnumbersEseries=[]
+    serialnumbersStorageGrid=[] 
+    serialnumbersStorageGrid=[]
 
 if(len(serialnumbers) == 0):
     userio.message("No Ontap serialnumbers provided, exiting...")
