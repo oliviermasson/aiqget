@@ -62,11 +62,17 @@ class getEseriesCapacity:
                 self.response=rest.response
                 if self.debug & 4:
                     self.showDebug()
-                self.aggrECapacity[serialnumber]={'TotalTB':round(int(self.response['data']['SANtricitySystemCapacity']['totalKiB'])/1024/1024/1024,2),
+                if self.response['data']['SANtricitySystemCapacity'] is not None:
+                    self.aggrECapacity[serialnumber]={'TotalTB':round(int(self.response['data']['SANtricitySystemCapacity']['totalKiB'])/1024/1024/1024,2),
                                                         'UsedTB':round(int(self.response['data']['SANtricitySystemCapacity']['configured']['allocatedKiB'])/1024/1024/1024,2),
                                                         'AvailTB':round(int(self.response['data']['SANtricitySystemCapacity']['configured']['freeKiB'])/1024/1024/1024,2),
                                                         'Used%':round(int(self.response['data']['SANtricitySystemCapacity']['configured']['allocatedKiB'])/int(self.response['data']['SANtricitySystemCapacity']['totalKiB'])*100,2)}
-                
+                else:
+                    self.aggrECapacity[serialnumber]={'TotalTB':'n/a',
+                                                      'UsedTB':'n/a',
+                                                      'AvailTB':'n/a',
+                                                      'Used%':'n/a'}
+                    
             else:
                 self.result=1
                 self.reason=rest.reason
