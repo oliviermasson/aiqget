@@ -512,6 +512,15 @@ html_content = f"""
         }}
     </style>
     <script>
+        window.onerror = function(message, source, line, column, error) {{{{
+            console.log('JavaScript error:', message);
+            console.log('Source:', source);
+            console.log('Line:', line);
+            console.log('Column:', column);
+            console.log('Error object:', error);
+            return false;
+        }}}}
+        
         let modelFilterActive = false;
         let hostNameFilterActive = false;
         let activeHostNameFilter = "";
@@ -836,69 +845,73 @@ html_content = f"""
         }}}}
 
         function sortTable(n) {{{{
-            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            table = document.querySelector("table");
-            switching = true;
-            dir = "asc";
+            console.time("sort");
+            const table = document.querySelector("table");
+            const headers = table.getElementsByTagName("th");
             
-            // Remove sorting indicators from all headers
-            var headers = table.getElementsByTagName("th");
-            for (i = 0; i < headers.length; i++) {{{{
+            // Déterminer la direction de tri
+            let dir = "asc";
+            if (headers[n].classList.contains("asc")) {{{{
+                dir = "desc";
+            }}}}
+            
+            // Mettre à jour les indicateurs de tri
+            for (let i = 0; i < headers.length; i++) {{{{
                 headers[i].classList.remove("asc", "desc");
-            }}}}  
-            
-            // Add sorting indicator to clicked header
+            }}}}
             headers[n].classList.add(dir);
             
-            while (switching) {{{{
-                switching = false;
-                rows = table.rows;
+            // Mettre le tableau en mode invisible pendant les manipulations
+            table.style.opacity = "0.3";
+            
+            setTimeout(() => {{{{
+                const tbody = table.querySelector("tbody") || table;
+                const rows = Array.from(tbody.rows);
                 
-                for (i = 1; i < (rows.length - 1); i++) {{{{
-                    shouldSwitch = false;
-                    x = rows[i].getElementsByTagName("td")[n];
-                    y = rows[i + 1].getElementsByTagName("td")[n];
+                // Fonction de comparaison
+                const compare = (a, b) => {{{{
+                    // Utiliser l'attribut data-value si disponible
+                    const cellA = a.cells[n];
+                    const cellB = b.cells[n];
                     
-                    // Convert to number if possible and handle decimal numbers
-                    let xContent = x.innerHTML.trim();
-                    let yContent = y.innerHTML.trim();
-
-                    let xNum = extractNumber(xContent);
-                    let yNum = extractNumber(yContent);
-                    if (!isNaN(xNum) && !isNaN(yNum)) {{{{
-                        xContent = xNum;
-                        yContent = yNum;
+                    let valueA = cellA.getAttribute("data-value");
+                    let valueB = cellB.getAttribute("data-value");
+                    
+                    if (!valueA || !valueB) {{{{
+                        valueA = cellA.textContent.trim().toLowerCase();
+                        valueB = cellB.textContent.trim().toLowerCase();
+                        
+                        const numA = extractNumber(valueA);
+                        const numB = extractNumber(valueB);
+                        
+                        if (!isNaN(numA) && !isNaN(numB)) {{{{
+                            valueA = numA;
+                            valueB = numB;
+                        }}}}
                     }}}} else {{{{
-                        xContent = xContent.toLowerCase();
-                        yContent = yContent.toLowerCase();
+                        valueA = parseFloat(valueA);
+                        valueB = parseFloat(valueB);
                     }}}}
-
-                    if (dir == "asc") {{{{
-                        if (xContent > yContent) {{{{
-                            shouldSwitch = true;
-                            break;
-                        }}}}
-                    }}}} else if (dir == "desc") {{{{
-                        if (xContent < yContent) {{{{
-                            shouldSwitch = true;
-                            break;
-                        }}}}
+                    
+                    if (dir === "asc") {{{{
+                        return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+                    }}}} else {{{{
+                        return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
                     }}}}
+                }}}};
+                
+                // Trier les lignes
+                rows.sort(compare);
+                
+                // Réorganiser les lignes dans le DOM
+                for (const row of rows) {{{{
+                    tbody.appendChild(row);
                 }}}}
                 
-                if (shouldSwitch) {{{{
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    switchcount++;
-                }}}} else {{{{
-                    if (switchcount == 0 && dir == "asc") {{{{
-                        dir = "desc";
-                        headers[n].classList.remove("asc");
-                        headers[n].classList.add("desc");
-                        switching = true;
-                    }}}}
-                }}}}
-            }}}}
+                // Restaurer la visibilité
+                table.style.opacity = "1";
+                console.timeEnd("sort");
+            }}}}, 10);
         }}}}
 
         window.testFilters = testFilters;
@@ -923,7 +936,7 @@ html_content += '''
 '''
 
 # Create table headers
-html_content += "<tr>"
+html_content += "<thead><tr>"
 html_content += '<th onclick="sortTable(0)">Serial Number</th>'
 column_index = 1
 for key in sorted(all_keys):
@@ -939,7 +952,7 @@ for key in sorted(all_keys):
     else:
         html_content += f'<th onclick="sortTable({column_index})">{key}</th>'
     column_index += 1
-html_content += "</tr>"
+html_content += "</tr></thead><tbody>"
 
 # Ajouter les lignes de données avec comparaison
 for serial, data in wholeNumbers.items():
@@ -947,8 +960,11 @@ for serial, data in wholeNumbers.items():
     for key in sorted(all_keys):
         try:
             current_value = round(float(data.get(key, "N/A")),2)
+            # Ajouter un attribut data-value avec la valeur numérique pour le tri rapide
+            data_attr = f' data-value="{current_value}"'
         except (ValueError, TypeError):
             current_value = data.get(key, "N/A")
+            data_attr = ""
         try:
             previous_value = round(float(previous_data.get(serial, {}).get(key, None)),2)
         except (ValueError, TypeError):
@@ -975,17 +991,17 @@ for serial, data in wholeNumbers.items():
 
                 # Ajouter la variation à la valeur actuelle
                 if variation != 0:
-                    html_content += f"<td>{current_value} {variation_html}</td>"
+                    html_content += f"<td{data_attr}>{current_value} {variation_html}</td>"
                 else:
-                    html_content += f"<td>{current_value}</td>"
+                    html_content += f"<td{data_attr}>{current_value}</td>"
             except ValueError:
                 # Si la conversion échoue, afficher uniquement la valeur actuelle
-                html_content += f"<td>{current_value}</td>"
+                html_content += f"<td{data_attr}>{current_value}</td>"
         else:
             # Pas de comparaison, afficher uniquement la valeur actuelle
-            html_content += f"<td>{current_value}</td>"
+            html_content += f"<td{data_attr}>{current_value}</td>"
     html_content += "</tr>"
-
+html_content += "</tbody>"
 html_content += """
     </table>
 </body>

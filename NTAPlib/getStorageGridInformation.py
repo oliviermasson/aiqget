@@ -150,7 +150,8 @@ class getStorageGridInformation:
                                                     'UsedTB':round(int(gridsite['siteCapacity']['configured']['usedKiB'])/1024/1024/1024,2),
                                                     'AvailTB':round(int(gridsite['siteCapacity']['configured']['usableKiB'])/1024/1024/1024,2),
                                                     'TotalTB':round(int(gridsite['siteCapacity']['configured']['usedKiB']+gridsite['siteCapacity']['configured']['usableKiB'])/1024/1024/1024,2),
-                                                    'Used%':round((int(gridsite['siteCapacity']['configured']['usedKiB'])/int(gridsite['siteCapacity']['configured']['usedKiB']+gridsite['siteCapacity']['configured']['usableKiB']))*100,2)}
+                                                    'Used%':round((int(gridsite['siteCapacity']['configured']['usedKiB'])/int(gridsite['siteCapacity']['configured']['usedKiB']+gridsite['siteCapacity']['configured']['usableKiB']))*100,2),
+                                                    'Model':"StorageGRID"}
             else:
                 self.result=1
                 self.reason=rest.reason
